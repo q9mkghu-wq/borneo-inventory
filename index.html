@@ -277,6 +277,7 @@
         <div id="bc_model_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">모델</div><select id="bc_model" onchange="bOnModel()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
         <div id="bc_size_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">사이즈</div><select id="bc_size" onchange="bOnSize()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
         <div id="bc_color_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">색상</div><select id="bc_color" onchange="bOnColor()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+        <div id="bc_memo_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">메모</div><input type="text" id="bc_memo" placeholder="메모 입력 후 담기" style="width:100%;font-size:13px;" oninput="bOnMemoInput()"></div>
         <div id="bc_mattyn_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">매트리스</div><select id="bc_mattyn" onchange="bOnMattYn()" style="width:100%;font-size:13px;"><option value="">선택</option><option value="없음">없음</option><option value="있음">포함</option></select></div>
         <div id="bc_matttype_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">매트 종류</div><select id="bc_matttype" onchange="bOnMattType()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
         <div id="bc_mattsize_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">매트 사이즈</div><select id="bc_mattsize" onchange="bOnMattSize()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
@@ -430,6 +431,7 @@
       </div>
       <div class="mgmt-sec" style="margin-bottom:10px;"><h4>모델 (카테고리별)</h4><div id="opt-model-all"></div></div>
       <div class="mgmt-sec" style="margin-bottom:10px;"><h4>카테고리별 사이즈 <span style="font-size:11px;font-weight:400;color:#9ca3af;">(침대 외 — 비우면 사이즈 단계 생략)</span></h4><div id="opt-cat-sizes"></div></div>
+      <div class="mgmt-sec" style="margin-bottom:10px;"><h4>색상 없이 메모만 사용하는 카테고리</h4><p class="note">체크된 카테고리는 색상 선택 없이 메모 입력란이 나타납니다. (예: 브로드)</p><div id="opt-no-color-cats"></div></div>
       <div class="mgmt-sec" style="margin-bottom:0;"><h4>매트리스 선택 대상 모델</h4><p class="note">체크된 모델은 색상 선택 후 매트리스 여부 선택이 나타납니다.</p><div id="opt-matt-models"></div></div>
     </div>
 
