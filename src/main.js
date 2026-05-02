@@ -436,6 +436,98 @@ window.exportExcel=function(){
   showToast('엑셀 파일 다운로드 완료')
 }
 
+// ── 인쇄 ─────────────────────────────────────────────
+window.openPrintModal=function(){
+  if(!cart.length){showToast('담은 제품이 없습니다.','warn');return}
+  const driver=document.getElementById('batchDriver').value
+  const now=new Date().toLocaleString('ko-KR')
+  const totalSets=cart.reduce((s,i)=>s+i.qty,0)
+
+  // 부품 합산
+  const total={}
+  cart.forEach(item=>{
+    if(!item.parts)return
+    Object.entries(item.parts).forEach(([part,n])=>{
+      if(!total[part])total[part]={need:0,usedBy:[]}
+      total[part].need+=n*item.qty
+      if(!total[part].usedBy.includes(item.name))total[part].usedBy.push(item.name)
+    })
+  })
+
+  // 재고 부족 경고
+  const shortParts=Object.entries(total).filter(([p,d])=>(S.parts[p]?S.parts[p].qty:0)<d.need)
+
+  let html=`
+  <div class="doc-header">
+    <div class="doc-title">보루네오 가구 — 창고 픽업 목록</div>
+    <div class="doc-sub">묶음 출고 부품 합산표</div>
+  </div>
+  <div class="doc-meta">
+    <span>📅 출력일시: ${now}</span>
+    <span>👷 담당기사: ${driver||'미지정'}</span>
+    <span>📦 총 ${cart.length}건 / ${totalSets}세트</span>
+  </div>`
+
+  if(shortParts.length){
+    html+=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#991b1b;font-weight:500;">🚨 재고 부족 부품 ${shortParts.length}종: ${shortParts.map(([p])=>p).join(', ')}</div>`
+  }
+
+  // ① 창고 픽업 목록 (합산)
+  html+=`<div class="section-title">① 창고 픽업 목록 (부품 합산)</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:28px;">✓</th>
+        <th>부품명</th>
+        <th style="text-align:center;width:80px;">필요 수량</th>
+        <th style="text-align:center;width:70px;">현재 재고</th>
+        <th style="text-align:center;width:60px;">상태</th>
+        <th style="width:80px;">구분</th>
+      </tr>
+    </thead>
+    <tbody>`
+
+  Object.entries(total).sort((a,b)=>a[0].localeCompare(b[0],'ko')).forEach(([part,d])=>{
+    const stock=S.parts[part]?S.parts[part].qty:0
+    const isShort=stock<d.need, isEmpty=stock===0, isShared=d.usedBy.length>1
+    const rowCls=isEmpty?'danger-row':isShort?'warning-row':''
+    const stockCls=isEmpty?'stock-empty':isShort?'stock-low':'stock-ok'
+    const status=isEmpty?'⚠ 소진':isShort?'⚠ 부족':'✓ OK'
+    html+=`<tr class="${rowCls}">
+      <td style="text-align:center;"><span class="check-box"></span></td>
+      <td><strong>${part}</strong></td>
+      <td style="text-align:center;"><span class="need-qty">${d.need}개</span></td>
+      <td style="text-align:center;" class="${stockCls}">${stock}개</td>
+      <td style="text-align:center;" class="${stockCls}">${status}</td>
+      <td style="font-size:12px;">${isShared?`공통(${d.usedBy.length}개)`:' 단독'}</td>
+    </tr>`
+  })
+  html+=`</tbody></table>`
+
+  // ② 제품별 배송 목록
+  html+=`<div class="section-title">② 제품별 배송 목록</div>`
+  cart.forEach((item,idx)=>{
+    if(!item.parts)return
+    const partLines=Object.entries(item.parts).map(([p,n])=>`${p} × ${n*item.qty}개`).join(', ')
+    html+=`<div class="prod-block">
+      <div class="prod-block-title">${idx+1}. ${item.name} × ${item.qty}세트${item.customer?' — '+item.customer:''}</div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">${item.addr||'배송지 미입력'}</div>
+      <div style="font-size:12px;color:#374151;">${partLines}</div>
+    </div>`
+  })
+
+  // ③ 서명란
+  html+=`
+  <div class="sig-row">
+    <div class="sig-box">창고 담당자 확인</div>
+    <div class="sig-box">기사 수령 확인 (${driver||'　　　'})</div>
+    <div class="sig-box">관리자 승인</div>
+  </div>`
+
+  document.getElementById('printDoc').innerHTML=html
+  document.getElementById('printModalContainer').style.display='block'
+}
+
 // ── 유틸 ─────────────────────────────────────────────
 function mc(label,val,color){return`<div class="metric"><div class="metric-label">${label}</div><div class="metric-val"${color?` style="color:${color}"`:''}>${val}</div></div>`}
 let toastTimer
