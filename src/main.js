@@ -19,7 +19,8 @@ const DEFAULT_CFG = {
   colors:['화이트','월넛','오크','블랙'],
   mattTypes:['본넬스프링','포켓스프링','메모리폼','라텍스'],
   mattSizes:['싱글(SS)','슈퍼싱글','더블(D)','퀸(Q)','킹(K)'],
-  mattModels:['보르네오 A형','루체 1000']
+  mattModels:['보르네오 A형','루체 1000'],
+  noColorCats:[]  // 색상 없이 메모만 사용하는 카테고리
 }
 let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG))
 
@@ -28,7 +29,7 @@ let SEL_cat='', SEL_sub='', SEL_model='', SEL_size='', SEL_color=''
 let SEL_mattyn='', SEL_matttype='', SEL_mattsize='', finalProdName=''
 
 // 묶음 출고 선택 상태
-let BSEL = {cat:'',sub:'',model:'',size:'',color:'',mattyn:'',matttype:'',mattsize:''}
+let BSEL = {cat:'',sub:'',model:'',size:'',color:'',memo:'',mattyn:'',matttype:'',mattsize:''}
 
 const DP = {'프레임(대)':{qty:80,min:10},'프레임(소)':{qty:75,min:10},'사이드레일 L':{qty:60,min:8},'사이드레일 R':{qty:60,min:8},'헤드보드':{qty:45,min:5},'풋보드':{qty:40,min:5},'슬랫(12개입)':{qty:50,min:6},'중간지지대':{qty:55,min:8},'볼트세트A':{qty:120,min:20},'볼트세트B':{qty:110,min:20},'서랍(좌)':{qty:35,min:5},'서랍(우)':{qty:35,min:5},'다리(4개입)':{qty:48,min:6},'매트지지판':{qty:30,min:4},'조립설명서':{qty:200,min:30}}
 const DPR = {'A형 침대 싱글':{'프레임(대)':1,'사이드레일 L':1,'사이드레일 R':1,'슬랫(12개입)':1,'볼트세트A':1,'조립설명서':1},'A형 침대 퀸':{'프레임(대)':1,'프레임(소)':1,'사이드레일 L':1,'사이드레일 R':1,'슬랫(12개입)':2,'볼트세트A':1,'조립설명서':1}}
@@ -115,10 +116,25 @@ function getCatSizes(cat){
   return CFG.catSizes[cat]||[]      // 그 외 카테고리: 등록된 사이즈 or 없음
 }
 // 사이즈 있으면 4단계, 없으면 바로 5단계(색상)
+// 색상 없는 카테고리 여부
+function isNoColor(cat){return (CFG.noColorCats||[]).includes(cat)}
+
+// 색상 or 메모로 분기
+function goToColorOrMemo(showFn, cat, sel_color_id, memo_w_id, color_w_id){
+  if(isNoColor(cat)){
+    bShowW(color_w_id, false)
+    bShowW(memo_w_id, true)
+  } else {
+    bShowW(memo_w_id, false)
+    bShowW(color_w_id, true)
+    if(sel_color_id) bPopSel(sel_color_id, CFG.colors)
+  }
+}
+
 function goToSizeOrColor(){
   const sizes=getCatSizes(SEL_cat)
   if(sizes.length){popSel('sc_size',sizes);showSW(4,true);setBadge(4,true)}
-  else{SEL_size='';popSel('sc_color',CFG.colors);showSW(5,true);setBadge(5,true)}
+  else{SEL_size='';if(isNoColor(SEL_cat)){showFinalResult()}else{popSel('sc_color',CFG.colors);showSW(5,true);setBadge(5,true)}}
 }
 
 window.step1_cat=function(){
@@ -153,7 +169,8 @@ window.step4_size=function(){
   SEL_size=document.getElementById('sc_size').value;SEL_color='';SEL_mattyn='';SEL_matttype='';SEL_mattsize='';finalProdName=''
   for(let i=5;i<=8;i++)showSW(i,false)
   document.getElementById('resultSel').style.display='none';document.getElementById('shipBtn').disabled=true
-  if(!SEL_size)return;popSel('sc_color',CFG.colors);showSW(5,true);setBadge(5,true)
+  if(!SEL_size)return
+  if(isNoColor(SEL_cat)){showSW(5,false);showFinalResult()}else{popSel('sc_color',CFG.colors);showSW(5,true);setBadge(5,true)}
 }
 
 window.step5_color=function(){
@@ -229,20 +246,29 @@ function popBatchDriverSel(){const sel=document.getElementById('batchDriver'),cu
 function populateBatchCatSel(){const sel=document.getElementById('bc_cat');const cur=sel.value;sel.innerHTML='<option value="">선택</option>';CFG.categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===cur)o.selected=true;sel.appendChild(o)})}
 function bShowW(id,v){const el=document.getElementById(id);if(el)el.style.display=v?'block':'none'}
 function bPopSel(id,arr){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">선택</option>';arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)})}
-function bResetFrom(step){if(step<=2){BSEL.sub='';bShowW('bc_sub_w',false)}if(step<=3){BSEL.model='';bShowW('bc_model_w',false)}if(step<=4){BSEL.size='';bShowW('bc_size_w',false)}if(step<=5){BSEL.color='';bShowW('bc_color_w',false)}BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize='';bShowW('bc_mattyn_w',false);bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false);document.getElementById('bc_preview_name').textContent=''}
+function bResetFrom(step){if(step<=2){BSEL.sub='';bShowW('bc_sub_w',false)}if(step<=3){BSEL.model='';bShowW('bc_model_w',false)}if(step<=4){BSEL.size='';bShowW('bc_size_w',false)}if(step<=5){BSEL.color='';bShowW('bc_color_w',false)}BSEL.memo='';BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize='';bShowW('bc_memo_w',false);bShowW('bc_mattyn_w',false);bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false);document.getElementById('bc_preview_name').textContent=''}
 
 window.bOnCat=function(){BSEL.cat=document.getElementById('bc_cat').value;bResetFrom(2);if(!BSEL.cat)return;if(BSEL.cat==='침대'){document.getElementById('bc_sub_lbl').textContent='재질';bPopSel('bc_sub',CFG.pyunbaek)}else{document.getElementById('bc_sub_lbl').textContent='모델';bPopSel('bc_sub',CFG.models[BSEL.cat]||[])}bShowW('bc_sub_w',true)}
 function bGoToSizeOrColor(){
   const sizes=getCatSizes(BSEL.cat)
   if(sizes.length){bPopSel('bc_size',sizes);bShowW('bc_size_w',true)}
-  else{BSEL.size='';bPopSel('bc_color',CFG.colors);bShowW('bc_color_w',true)}
+  else{BSEL.size='';bGoToColorOrMemo()}
+}
+function bGoToColorOrMemo(){
+  if(isNoColor(BSEL.cat)){
+    bShowW('bc_color_w',false);bShowW('bc_memo_w',true)
+    const el=document.getElementById('bc_memo');if(el){el.value='';el.focus();}
+  } else {
+    bShowW('bc_memo_w',false);bShowW('bc_color_w',true)
+    bPopSel('bc_color',CFG.colors)
+  }
 }
 window.bOnSub=function(){BSEL.sub=document.getElementById('bc_sub').value;bResetFrom(3);if(!BSEL.sub)return;if(BSEL.cat==='침대'){if(BSEL.sub.includes('편백')){bGoToSizeOrColor()}else{bPopSel('bc_model',CFG.models['침대']||[]);bShowW('bc_model_w',true)}}else{bGoToSizeOrColor()}}
 window.bOnModel=function(){BSEL.model=document.getElementById('bc_model').value;bResetFrom(4);if(!BSEL.model)return;bGoToSizeOrColor()}
-window.bOnSize=function(){BSEL.size=document.getElementById('bc_size').value;bResetFrom(5);if(!BSEL.size)return;bPopSel('bc_color',CFG.colors);bShowW('bc_color_w',true)}
+window.bOnSize=function(){BSEL.size=document.getElementById('bc_size').value;bResetFrom(5);if(!BSEL.size)return;bGoToColorOrMemo()}
 window.bOnColor=function(){
   BSEL.color=document.getElementById('bc_color').value
-  BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize=''
+  BSEL.memo='';BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize=''
   bShowW('bc_mattyn_w',false);bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false)
   if(!BSEL.color)return
   // 매트 대상 모델 확인
@@ -279,6 +305,7 @@ window.bOnMattSize=function(){
   bShowFinal()
 }
 function bShowFinal(){
+  BSEL.memo=(document.getElementById('bc_memo')||{value:''}).value.trim()
   const name=bBuildName()
   let mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:''
   document.getElementById('bc_preview_name').textContent='✅ '+name+mattStr+(S.products[name]?'':'  ⚠ 부품 구성 미등록')
@@ -296,15 +323,25 @@ function bBuildName(){
 }
 function bBuildFullName(){
   const base=bBuildName()
+  const memoStr=BSEL.memo?` [${BSEL.memo}]`:''
   const mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:''
   return base+mattStr
 }
 
+window.bOnMemoInput=function(){
+  BSEL.memo=(document.getElementById('bc_memo')||{value:''}).value.trim()
+  const name=bBuildName()
+  const mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:'';
+  const memoStr=BSEL.memo?` [${BSEL.memo}]`:''
+  document.getElementById('bc_preview_name').textContent='✅ '+name+memoStr+mattStr+(S.products[name]?'':'  ⚠ 부품 구성 미등록')
+  bShowW('bc_add_row',true)
+}
 window.addToCart=function(){
   const name=bBuildFullName(),baseName=bBuildName(),qty=parseInt(document.getElementById('bc_qty').value)||1
   const customer=document.getElementById('bc_customer').value.trim(),addr=document.getElementById('bc_addr').value.trim()
-  cart.push({name,qty,customer,addr,parts:S.products[baseName]||null})
-  document.getElementById('bc_cat').value='';BSEL={cat:'',sub:'',model:'',size:'',color:'',mattyn:'',matttype:'',mattsize:''}
+  const memo=BSEL.memo||''
+  cart.push({name,qty,customer,addr,memo,parts:S.products[baseName]||null})
+  document.getElementById('bc_cat').value='';BSEL={cat:'',sub:'',model:'',size:'',color:'',memo:'',mattyn:'',matttype:'',mattsize:''}
   bResetFrom(2);document.getElementById('bc_qty').value=1;document.getElementById('bc_customer').value='';document.getElementById('bc_addr').value=''
   renderCart();renderBatchSummary();showToast(name+' 담기 완료')
 }
@@ -491,6 +528,7 @@ function renderOptMgmt(){
   renderOptTags('opt-mattsize','mattSizes')
   renderOptAllModels()
   renderOptMattModels()
+  renderNoColorCats()
   populateCatSel()
   populateBatchCatSel()
   renderIntegratedProdList()
@@ -579,6 +617,7 @@ window.addOptModelForCat=async function(cat){
   await save()
   renderOptAllModels()
   renderOptMattModels()
+  renderNoColorCats()
   populateCatSel()
   populateBatchCatSel()
   showToast(v+' 추가됨')
@@ -617,6 +656,25 @@ window.confirmEditModel=async function(cat,i){
 window.removeOptModel=async function(cat,i){CFG.models[cat].splice(i,1);await save();renderOptAllModels();renderOptMattModels()}
 function renderOptMattModels(){const wrap=document.getElementById('opt-matt-models'),allModels=[];Object.entries(CFG.models).forEach(([cat,ms])=>ms.forEach(m=>allModels.push({cat,m})));CFG.pyunbaek.forEach(p=>allModels.push({cat:'침대(편백재질)',m:p}));if(!allModels.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;">모델을 먼저 등록하세요</div>';return}wrap.innerHTML=allModels.map(({cat,m})=>{const uid='mc_'+m.replace(/[\s()\/]/g,'_');const checked=CFG.mattModels.includes(m);return`<div class="check-row"><input type="checkbox" id="${uid}" ${checked?'checked':''} onchange="toggleMattModel('${m.replace(/'/g,"\\'")}',this.checked)"><label for="${uid}">[${cat}] ${m}</label></div>`}).join('')}
 window.toggleMattModel=async function(model,checked){if(checked){if(!CFG.mattModels.includes(model))CFG.mattModels.push(model)}else{CFG.mattModels=CFG.mattModels.filter(m=>m!==model)}await save()}
+
+function renderNoColorCats(){
+  const wrap=document.getElementById('opt-no-color-cats')
+  if(!wrap)return
+  if(!CFG.noColorCats)CFG.noColorCats=[]
+  if(!CFG.categories.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;">카테고리를 먼저 추가하세요</div>';return}
+  wrap.innerHTML=CFG.categories.map(cat=>{
+    const uid='nc_'+cat.replace(/[\s()]/g,'_')
+    const checked=(CFG.noColorCats||[]).includes(cat)
+    return`<div class="check-row"><input type="checkbox" id="${uid}" ${checked?'checked':''} onchange="toggleNoColor('${cat.replace(/'/g,"\'")}',this.checked)"><label for="${uid}">${cat}</label></div>`
+  }).join('')
+}
+window.toggleNoColor=async function(cat,checked){
+  if(!CFG.noColorCats)CFG.noColorCats=[]
+  if(checked){if(!CFG.noColorCats.includes(cat))CFG.noColorCats.push(cat)}
+  else{CFG.noColorCats=CFG.noColorCats.filter(c=>c!==cat)}
+  await save()
+  renderNoColorCats()
+}
 
 // ── 기사/제품 관리 ──────────────────────────────────
 window.addDriver=async function(){const input=document.getElementById('newDriverName'),name=input.value.trim();if(!name){showToast('기사명을 입력하세요.','warn');return}if(S.drivers.includes(name)){showToast('이미 등록된 기사입니다.','warn');return}S.drivers.push(name);await save();input.value='';renderDriverChips();popDriverSel();popBatchDriverSel();showToast(name+' 기사 추가 완료')}
