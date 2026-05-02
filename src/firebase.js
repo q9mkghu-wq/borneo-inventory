@@ -3,12 +3,12 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: "여기에-API-KEY",
-  authDomain: "여기에-프로젝트ID.firebaseapp.com",
-  projectId: "여기에-프로젝트ID",
-  storageBucket: "여기에-프로젝트ID.appspot.com",
-  messagingSenderId: "여기에-SENDER-ID",
-  appId: "여기에-APP-ID"
+ apiKey: "AIzaSyC6RdJRUntnxQJ4ncJo0sK-Okc8288LFRs",
+  authDomain: "borneo-inventory.firebaseapp.com",
+  projectId: "borneo-inventory",
+  storageBucket: "borneo-inventory.firebasestorage.app",
+  messagingSenderId: "593523936913",
+  appId: "1:593523936913:web:63ee3ad60e9e7b9966f930"
 }
 
 const app = initializeApp(firebaseConfig)
