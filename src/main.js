@@ -76,7 +76,7 @@ function refreshUI(){
   if(id==='tab-기사통계')renderDriverStatPage()
   if(id==='tab-이력')renderHistory()
   if(id==='tab-입고이력')renderInHistory()
-  if(id==='tab-관리'){renderDriverChips();renderPartMgmt();renderProdList();renderPartSlots();renderOptMgmt()}
+  if(id==='tab-관리'){renderDriverChips();renderPartMgmt();renderOptMgmt();renderIntegratedProdList()}
 }
 
 window.showTab=function(name){
@@ -90,7 +90,7 @@ window.showTab=function(name){
   if(name==='기사통계')renderDriverStatPage()
   if(name==='이력')renderHistory()
   if(name==='입고이력')renderInHistory()
-  if(name==='관리'){renderDriverChips();renderPartMgmt();renderProdList();renderPartSlots();renderOptMgmt()}
+  if(name==='관리'){renderDriverChips();renderPartMgmt();renderOptMgmt();renderIntegratedProdList()}
 }
 
 function renderAlerts(){
@@ -441,10 +441,11 @@ function renderOptMgmt(){
   renderOptTags('opt-color','colors')
   renderOptTags('opt-matt','mattTypes')
   renderOptTags('opt-mattsize','mattSizes')
-  renderOptAllModels()   // ★ 드롭다운 대신 카테고리별 전체 표시
+  renderOptAllModels()
   renderOptMattModels()
   populateCatSel()
   populateBatchCatSel()
+  renderIntegratedProdList()
 }
 
 // 카테고리별 사이즈 설정
@@ -618,6 +619,96 @@ window.saveProduct=async function(){
   document.getElementById('newProdName').value='';partSlots=[{part:'',qty:1}];renderPartSlots();renderProdList()
   showToast(name+' 제품 저장 완료')
 }
+// ── 제품 자동 생성 ───────────────────────────────────
+window.autoGenProds=async function(){
+  if(!CFG.catSizes)CFG.catSizes={}
+  let count=0
+  CFG.categories.forEach(cat=>{
+    const isBed=cat==='침대'
+    if(isBed){
+      CFG.pyunbaek.forEach(sub=>{
+        const isPyun=sub.includes('편백')
+        if(isPyun){
+          CFG.sizes.forEach(sz=>CFG.colors.forEach(col=>{
+            const name=`${cat} ${sub} ${sz} ${col}`
+            if(!S.products[name]){S.products[name]={};count++}
+          }))
+        } else {
+          ;(CFG.models[cat]||[]).forEach(model=>
+            CFG.sizes.forEach(sz=>CFG.colors.forEach(col=>{
+              const name=`${cat} ${sub} ${model} ${sz} ${col}`
+              if(!S.products[name]){S.products[name]={};count++}
+            }))
+          )
+        }
+      })
+    } else {
+      const catSizes=CFG.catSizes[cat]||[]
+      ;(CFG.models[cat]||[]).forEach(model=>{
+        if(catSizes.length){
+          catSizes.forEach(sz=>CFG.colors.forEach(col=>{
+            const name=`${cat} ${model} ${sz} ${col}`
+            if(!S.products[name]){S.products[name]={};count++}
+          }))
+        } else {
+          CFG.colors.forEach(col=>{
+            const name=`${cat} ${model} ${col}`
+            if(!S.products[name]){S.products[name]={};count++}
+          })
+        }
+      })
+    }
+  })
+  if(count>0){await save();showToast(count+'개 제품이 새로 생성됐습니다.')}
+  else showToast('이미 모두 생성되어 있습니다.','warn')
+  renderIntegratedProdList()
+}
+
+let _prodCatFilter='전체'
+
+function renderIntegratedProdList(){
+  // 카테고리 필터 탭
+  const filterWrap=document.getElementById('prod-cat-filter')
+  if(filterWrap){
+    const cats=['전체',...CFG.categories]
+    filterWrap.innerHTML=cats.map(c=>
+      `<button style="padding:4px 12px;font-size:12px;border:1px solid ${c===_prodCatFilter?'#111827':'#d1d5db'};border-radius:20px;background:${c===_prodCatFilter?'#111827':'none'};color:${c===_prodCatFilter?'#fff':'#6b7280'};cursor:pointer;" onclick="setProdCatFilter('${c.replace(/'/g,"\'")}')"> ${c}</button>`
+    ).join('')
+  }
+
+  const q=(document.getElementById('prod-search')||{value:''}).value.toLowerCase()
+  const tbody=document.getElementById('integratedProdBody')
+  if(!tbody)return
+
+  let entries=Object.entries(S.products).sort((a,b)=>a[0].localeCompare(b[0],'ko'))
+  if(_prodCatFilter!=='전체') entries=entries.filter(([name])=>name.startsWith(_prodCatFilter))
+  if(q) entries=entries.filter(([name])=>name.toLowerCase().includes(q))
+
+  if(!entries.length){
+    tbody.innerHTML=`<tr><td colspan="3" class="empty-state">제품이 없습니다.<br><small>위에서 옵션 설정 후 "제품 목록 생성" 버튼을 누르세요.</small></td></tr>`
+    return
+  }
+
+  tbody.innerHTML=entries.map(([name,parts])=>{
+    const hasParts=Object.keys(parts).length>0
+    const partsStr=hasParts
+      ? Object.entries(parts).map(([p,n])=>p+(n>1?' ×'+n:'')).join(', ')
+      : '<span style="color:#d97706;font-size:12px;">⚠ 부품 미등록</span>'
+    return`<tr>
+      <td style="font-size:13px;font-weight:500;">${name}</td>
+      <td style="font-size:12px;color:#6b7280;">${partsStr}</td>
+      <td>
+        <div style="display:flex;gap:5px;">
+          <button class="warning" style="font-size:12px;padding:5px 10px;" onclick="openEditProdModal('${name.replace(/'/g,"\'")}')">부품 등록</button>
+          <button class="danger" style="font-size:12px;padding:5px 10px;" onclick="deleteProd('${name.replace(/'/g,"\'")}')">삭제</button>
+        </div>
+      </td>
+    </tr>`
+  }).join('')
+}
+window.renderIntegratedProdList=renderIntegratedProdList
+window.setProdCatFilter=function(cat){_prodCatFilter=cat;renderIntegratedProdList()}
+
 function renderProdList(){
   const tbody=document.getElementById('prodListBody'),entries=Object.entries(S.products).sort()
   if(!entries.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">등록된 제품 없음</td></tr>';return}
