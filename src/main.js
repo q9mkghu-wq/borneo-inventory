@@ -509,10 +509,103 @@ function renderHistory(){const q=(document.getElementById('histSearch').value||'
 window.renderHistory=renderHistory
 
 // ── 부품 관리 ────────────────────────────────────────
-function renderPartMgmt(){const q=(document.getElementById('searchPartMgmt').value||'').toLowerCase(),tbody=document.getElementById('partMgmtBody'),entries=Object.entries(S.parts).filter(([n])=>n.toLowerCase().includes(q));if(!entries.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">검색 결과 없음</td></tr>';return}tbody.innerHTML=entries.map(([name,p])=>{const status=p.qty===0?'<span class="badge empty">소진</span>':p.qty<=p.min?'<span class="badge low">부족</span>':'<span class="badge ok">정상</span>';return`<tr><td style="font-weight:500;">${name}</td><td>${p.qty}</td><td style="color:#6b7280;">${p.min}</td><td>${status}</td><td><div style="display:flex;gap:6px;"><button class="warning" onclick="openEditPartModal('${name.replace(/'/g,"\\'")}')">수정</button><button class="danger" onclick="deletePartConfirm('${name.replace(/'/g,"\\'")}')">삭제</button></div></td></tr>`}).join('')}
+function renderPartMgmt(){
+  const q=(document.getElementById('searchPartMgmt').value||'').toLowerCase()
+  const tbody=document.getElementById('partMgmtBody')
+  let entries=Object.entries(S.parts).filter(([n])=>n.toLowerCase().includes(q))
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">검색 결과 없음</td></tr>';return}
 
-window.openAddPartModal=function(){document.getElementById('modalContainer').innerHTML=`<div class="modal-bg" onclick="closeMBg(event)"><div class="modal"><h4>➕ 부품 추가</h4><div class="modal-field"><label class="modal-label">부품명 *</label><input type="text" id="mp_name" placeholder="예: 서랍레일(좌)"></div><div class="modal-grid"><div><label class="modal-label">현재 재고</label><input type="number" id="mp_qty" value="0" min="0"></div><div><label class="modal-label">최소 재고</label><input type="number" id="mp_min" value="5" min="0"></div></div><div class="modal-actions"><button class="secondary" onclick="closeM()">취소</button><button class="primary" onclick="confirmAddPart()">추가</button></div></div></div>`;setTimeout(()=>document.getElementById('mp_name').focus(),50)}
-window.confirmAddPart=async function(){const name=document.getElementById('mp_name').value.trim(),qty=parseInt(document.getElementById('mp_qty').value)||0,min=parseInt(document.getElementById('mp_min').value)||0;if(!name){showToast('부품명을 입력하세요.','warn');return}if(S.parts[name]){showToast('이미 존재하는 부품명입니다.','warn');return}S.parts[name]={qty,min};await save();closeM();renderPartMgmt();renderInventory();renderSummary();popInPartSel();renderPartSlots();renderAlerts();showToast(name+' 부품 추가 완료')}
+  // 카테고리별 그룹핑
+  const groups={}
+  entries.forEach(([name,p])=>{
+    const cat=p.cat||'기타'
+    if(!groups[cat])groups[cat]=[]
+    groups[cat].push([name,p])
+  })
+
+  let html=''
+  // 카테고리 순서: CFG 카테고리 순 + 공통 + 기타
+  const catOrder=[...CFG.categories,'공통','기타']
+  catOrder.forEach(cat=>{
+    if(!groups[cat])return
+    html+=`<tr><td colspan="5" style="background:#f9fafb;font-size:12px;font-weight:600;color:#6b7280;padding:6px 10px;border-bottom:1px solid #e5e7eb;">📂 ${cat}</td></tr>`
+    groups[cat].forEach(([name,p])=>{
+      const status=p.qty===0?'<span class="badge empty">소진</span>':p.qty<=p.min?'<span class="badge low">부족</span>':'<span class="badge ok">정상</span>'
+      html+=`<tr>
+        <td style="font-weight:500;padding-left:20px;">${name}</td>
+        <td>${p.qty}</td>
+        <td style="color:#6b7280;">${p.min}</td>
+        <td>${status}</td>
+        <td><div style="display:flex;gap:6px;">
+          <button class="warning" onclick="openEditPartModal('${name.replace(/'/g,"\'")}')">수정</button>
+          <button class="danger" onclick="deletePartConfirm('${name.replace(/'/g,"\'")}')">삭제</button>
+        </div></td>
+      </tr>`
+    })
+  })
+  tbody.innerHTML=html
+}
+
+window.openAddPartModal=function(){
+  const catOpts=CFG.categories.map(c=>`<option value="${c}">${c}</option>`).join('')
+  document.getElementById('modalContainer').innerHTML=`
+  <div class="modal-bg" onclick="closeMBg(event)">
+    <div class="modal">
+      <h4>➕ 부품 추가</h4>
+      <div class="modal-field">
+        <label class="modal-label">카테고리 *</label>
+        <select id="mp_cat" style="width:100%;">
+          <option value="">-- 카테고리 선택 --</option>
+          ${catOpts}
+          <option value="공통">공통 (모든 카테고리)</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">부품명 *</label>
+        <input type="text" id="mp_name" placeholder="예: 사이드레일 L" style="width:100%;">
+        <div style="font-size:11px;color:#9ca3af;margin-top:3px;" id="mp_name_preview"></div>
+      </div>
+      <div class="modal-grid">
+        <div><label class="modal-label">현재 재고</label><input type="number" id="mp_qty" value="0" min="0" style="width:100%;"></div>
+        <div><label class="modal-label">최소 재고</label><input type="number" id="mp_min" value="5" min="0" style="width:100%;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary" onclick="closeM()">취소</button>
+        <button class="primary" onclick="confirmAddPart()">추가</button>
+      </div>
+    </div>
+  </div>`
+  // 카테고리/부품명 입력시 미리보기
+  setTimeout(()=>{
+    const catEl=document.getElementById('mp_cat')
+    const nameEl=document.getElementById('mp_name')
+    const preview=document.getElementById('mp_name_preview')
+    function updatePreview(){
+      const cat=catEl.value, nm=nameEl.value.trim()
+      if(cat&&nm) preview.textContent='저장될 부품명: '+nm+' ('+cat+')'
+      else preview.textContent=''
+    }
+    catEl.addEventListener('change',updatePreview)
+    nameEl.addEventListener('input',updatePreview)
+    nameEl.focus()
+  },50)
+}
+window.confirmAddPart=async function(){
+  const catEl=document.getElementById('mp_cat')
+  const cat=catEl?catEl.value:''
+  const rawName=document.getElementById('mp_name').value.trim()
+  const qty=parseInt(document.getElementById('mp_qty').value)||0
+  const min=parseInt(document.getElementById('mp_min').value)||0
+  if(!cat){showToast('카테고리를 선택하세요.','warn');return}
+  if(!rawName){showToast('부품명을 입력하세요.','warn');return}
+  // 카테고리 prefix 붙이기 (공통은 prefix 없음)
+  const name=cat==='공통'?rawName:rawName
+  // 같은 이름 중복 체크
+  if(S.parts[name]){showToast('이미 존재하는 부품명입니다.','warn');return}
+  S.parts[name]={qty,min,cat}
+  await save();closeM();renderPartMgmt();renderInventory();renderSummary();popInPartSel();renderPartSlots();renderAlerts()
+  showToast(name+' 부품 추가 완료')
+}
 window.openEditPartModal=function(name){const p=S.parts[name];document.getElementById('modalContainer').innerHTML=`<div class="modal-bg" onclick="closeMBg(event)"><div class="modal"><h4>✏️ 부품 수정</h4><div class="modal-field"><label class="modal-label">부품명 변경</label><input type="text" id="mp_newname" value="${name}"></div><div class="modal-grid"><div><label class="modal-label">현재 재고</label><input type="number" id="mp_qty" value="${p.qty}" min="0"></div><div><label class="modal-label">최소 재고</label><input type="number" id="mp_min" value="${p.min}" min="0"></div></div><div class="modal-actions"><button class="secondary" onclick="closeM()">취소</button><button class="primary" onclick="confirmEditPart('${name.replace(/'/g,"\\'")}')">저장</button></div></div></div>`;setTimeout(()=>document.getElementById('mp_newname').focus(),50)}
 window.confirmEditPart=async function(oldName){const newName=document.getElementById('mp_newname').value.trim(),qty=parseInt(document.getElementById('mp_qty').value)||0,min=parseInt(document.getElementById('mp_min').value)||0;if(!newName){showToast('부품명을 입력하세요.','warn');return}if(newName!==oldName&&S.parts[newName]){showToast('이미 존재하는 부품명입니다.','warn');return}if(newName!==oldName){delete S.parts[oldName];Object.keys(S.products).forEach(prod=>{if(S.products[prod][oldName]!==undefined){S.products[prod][newName]=S.products[prod][oldName];delete S.products[prod][oldName]}})}S.parts[newName]={qty,min};await save();closeM();renderPartMgmt();renderInventory();renderSummary();popInPartSel();renderPartSlots();renderAlerts();showToast(newName+' 수정 완료')}
 window.deletePartConfirm=async function(name){const usedIn=Object.entries(S.products).filter(([,parts])=>parts[name]).map(([n])=>n);let msg=`"${name}" 부품을 삭제할까요?`;if(usedIn.length)msg+=`\n\n⚠️ 아래 제품에서 사용 중입니다:\n${usedIn.join(', ')}\n\n제품 구성에서도 자동 제거됩니다.`;if(!confirm(msg))return;delete S.parts[name];Object.keys(S.products).forEach(prod=>{delete S.products[prod][name]});await save();renderPartMgmt();renderInventory();renderSummary();popInPartSel();renderPartSlots();renderAlerts();showToast(name+' 삭제됨')}
