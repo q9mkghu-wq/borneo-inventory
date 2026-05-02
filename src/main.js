@@ -334,9 +334,29 @@ window.processInbound=async function(){
   document.getElementById('inPartSelect').value='';document.getElementById('inQty').value=1;document.getElementById('inSupplier').value='';document.getElementById('inNote').value='';document.getElementById('inPreview').innerHTML=''
   btn.disabled=false;btn.textContent='입고 처리';renderAlerts();showToast(`${part} ${qty}개 입고 완료`)
 }
-function renderBulkRows(){const pn=Object.keys(S.parts).sort();document.getElementById('bulkInRows').innerHTML=bulkRows.map((r,i)=>`<div class="part-row"><select onchange="bulkRows[${i}].part=this.value" style="flex:1;font-size:13px;"><option value="">-- 부품 선택 --</option>${pn.map(p=>`<option value="${p}"${r.part===p?' selected':''}>${p}</option>`).join('')}</select><input type="number" min="1" value="${r.qty}" style="width:70px;" onchange="bulkRows[${i}].qty=parseInt(this.value)||1"><button class="danger" onclick="removeBulkRow(${i})">X</button></div>`).join('')}
-window.addBulkRow=()=>{bulkRows.push({part:'',qty:1});renderBulkRows()}
-window.removeBulkRow=(i)=>{bulkRows.splice(i,1);if(!bulkRows.length)bulkRows.push({part:'',qty:1});renderBulkRows()}
+function renderBulkRows(){
+  const pn=Object.keys(S.parts).sort()
+  document.getElementById('bulkInRows').innerHTML=bulkRows.map((r,i)=>`
+    <div class="part-row">
+      <select id="bslot_${i}" style="flex:1;font-size:13px;" onchange="bulkRows[${i}].part=this.value">
+        <option value="">-- 부품 선택 --</option>
+        ${pn.map(p=>`<option value="${p}"${r.part===p?' selected':''}>${p}</option>`).join('')}
+      </select>
+      <input type="number" id="bslot_qty_${i}" min="1" value="${r.qty}" style="width:70px;"
+        onchange="bulkRows[${i}].qty=parseInt(this.value)||1">
+      <button class="danger" onclick="removeBulkRow(${i})">X</button>
+    </div>`).join('')
+}
+function syncBulkRows(){
+  bulkRows.forEach((r,i)=>{
+    const sel=document.getElementById('bslot_'+i)
+    const qty=document.getElementById('bslot_qty_'+i)
+    if(sel)r.part=sel.value
+    if(qty)r.qty=parseInt(qty.value)||1
+  })
+}
+window.addBulkRow=()=>{syncBulkRows();bulkRows.push({part:'',qty:1});renderBulkRows()}
+window.removeBulkRow=(i)=>{syncBulkRows();bulkRows.splice(i,1);if(!bulkRows.length)bulkRows.push({part:'',qty:1});renderBulkRows()}
 window.processBulkInbound=async function(){
   const valid=bulkRows.filter(r=>r.part&&r.qty>0);if(!valid.length){showToast('부품을 선택해주세요.','warn');return}
   const time=new Date().toLocaleString('ko-KR')
@@ -410,10 +430,51 @@ window.toggleMattModel=async function(model,checked){if(checked){if(!CFG.mattMod
 window.addDriver=async function(){const input=document.getElementById('newDriverName'),name=input.value.trim();if(!name){showToast('기사명을 입력하세요.','warn');return}if(S.drivers.includes(name)){showToast('이미 등록된 기사입니다.','warn');return}S.drivers.push(name);await save();input.value='';renderDriverChips();popDriverSel();popBatchDriverSel();showToast(name+' 기사 추가 완료')}
 window.removeDriver=async function(name){if(!confirm(name+' 기사를 삭제할까요?'))return;S.drivers=S.drivers.filter(d=>d!==name);await save();renderDriverChips();popDriverSel();popBatchDriverSel();showToast(name+' 삭제됨')}
 function renderDriverChips(){const wrap=document.getElementById('driverChips');if(!S.drivers.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;padding:8px 0;">등록된 기사가 없습니다.</div>';return}wrap.innerHTML=S.drivers.slice().sort().map(d=>`<span class="driver-chip">${d}<button onclick="removeDriver('${d.replace(/'/g,"\\'")}')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></span>`).join('')}
-function renderPartSlots(){const pn=Object.keys(S.parts).sort();document.getElementById('prodPartsList').innerHTML=partSlots.map((s,i)=>`<div class="part-row"><select onchange="partSlots[${i}].part=this.value" style="flex:1;font-size:13px;"><option value="">-- 부품 선택 --</option>${pn.map(p=>`<option value="${p}"${s.part===p?' selected':''}>${p}</option>`).join('')}</select><input type="number" min="1" value="${s.qty}" style="width:60px;" onchange="partSlots[${i}].qty=parseInt(this.value)||1"><button class="danger" onclick="removeSlot(${i})">X</button></div>`).join('')}
-window.addPartSlot=()=>{partSlots.push({part:'',qty:1});renderPartSlots()}
-window.removeSlot=(i)=>{partSlots.splice(i,1);if(!partSlots.length)partSlots.push({part:'',qty:1});renderPartSlots()}
-window.saveProduct=async function(){const name=document.getElementById('newProdName').value.trim();if(!name){showToast('제품명을 입력하세요.','warn');return}const c={};partSlots.forEach(s=>{if(s.part)c[s.part]=s.qty});if(!Object.keys(c).length){showToast('부품을 하나 이상 선택하세요.','warn');return}S.products[name]=c;await save();document.getElementById('newProdName').value='';partSlots=[{part:'',qty:1}];renderPartSlots();renderProdList();showToast(name+' 제품 저장 완료')}
+function renderPartSlots(){
+  const pn=Object.keys(S.parts).sort()
+  const wrap=document.getElementById('prodPartsList')
+  wrap.innerHTML=partSlots.map((s,i)=>`
+    <div class="part-row">
+      <select id="pslot_${i}" style="flex:1;font-size:13px;" onchange="partSlots[${i}].part=this.value">
+        <option value="">-- 부품 선택 --</option>
+        ${pn.map(p=>`<option value="${p}"${s.part===p?' selected':''}>${p}</option>`).join('')}
+      </select>
+      <input type="number" id="pslot_qty_${i}" min="1" value="${s.qty}" style="width:60px;"
+        onchange="partSlots[${i}].qty=parseInt(this.value)||1">
+      <button class="danger" onclick="removeSlot(${i})">X</button>
+    </div>`).join('')
+}
+window.addPartSlot=function(){
+  // ★ 현재 DOM에서 선택값 먼저 저장 후 추가
+  syncPartSlots()
+  partSlots.push({part:'',qty:1})
+  renderPartSlots()
+}
+window.removeSlot=function(i){
+  syncPartSlots()
+  partSlots.splice(i,1)
+  if(!partSlots.length)partSlots.push({part:'',qty:1})
+  renderPartSlots()
+}
+// DOM → partSlots 동기화 (추가/삭제 전에 호출)
+function syncPartSlots(){
+  partSlots.forEach((s,i)=>{
+    const sel=document.getElementById('pslot_'+i)
+    const qty=document.getElementById('pslot_qty_'+i)
+    if(sel)s.part=sel.value
+    if(qty)s.qty=parseInt(qty.value)||1
+  })
+}
+window.saveProduct=async function(){
+  syncPartSlots()  // ★ 저장 전 DOM 값 동기화
+  const name=document.getElementById('newProdName').value.trim()
+  if(!name){showToast('제품명을 입력하세요.','warn');return}
+  const c={};partSlots.forEach(s=>{if(s.part)c[s.part]=s.qty})
+  if(!Object.keys(c).length){showToast('부품을 하나 이상 선택하세요.','warn');return}
+  S.products[name]=c;await save()
+  document.getElementById('newProdName').value='';partSlots=[{part:'',qty:1}];renderPartSlots();renderProdList()
+  showToast(name+' 제품 저장 완료')
+}
 function renderProdList(){const tbody=document.getElementById('prodListBody'),entries=Object.entries(S.products).sort();if(!entries.length){tbody.innerHTML='<tr><td colspan="3" class="empty-state">등록된 제품 없음</td></tr>';return}tbody.innerHTML=entries.map(([name,parts])=>`<tr><td style="font-size:13px;font-weight:500;">${name}</td><td style="font-size:12px;color:#6b7280;">${Object.entries(parts).map(([p,n])=>p+(n>1?'x'+n:'')).join(', ')}</td><td><button class="danger" onclick="deleteProd('${name.replace(/'/g,"\\'")}')">삭제</button></td></tr>`).join('')}
 window.deleteProd=async function(name){if(!confirm(name+' 제품을 삭제할까요?'))return;delete S.products[name];await save();renderProdList();showToast(name+' 삭제됨')}
 
