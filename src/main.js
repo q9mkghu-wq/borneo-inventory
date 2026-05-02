@@ -28,7 +28,7 @@ let SEL_cat='', SEL_sub='', SEL_model='', SEL_size='', SEL_color=''
 let SEL_mattyn='', SEL_matttype='', SEL_mattsize='', finalProdName=''
 
 // 묶음 출고 선택 상태
-let BSEL = {cat:'',sub:'',model:'',size:'',color:''}
+let BSEL = {cat:'',sub:'',model:'',size:'',color:'',mattyn:'',matttype:'',mattsize:''}
 
 const DP = {'프레임(대)':{qty:80,min:10},'프레임(소)':{qty:75,min:10},'사이드레일 L':{qty:60,min:8},'사이드레일 R':{qty:60,min:8},'헤드보드':{qty:45,min:5},'풋보드':{qty:40,min:5},'슬랫(12개입)':{qty:50,min:6},'중간지지대':{qty:55,min:8},'볼트세트A':{qty:120,min:20},'볼트세트B':{qty:110,min:20},'서랍(좌)':{qty:35,min:5},'서랍(우)':{qty:35,min:5},'다리(4개입)':{qty:48,min:6},'매트지지판':{qty:30,min:4},'조립설명서':{qty:200,min:30}}
 const DPR = {'A형 침대 싱글':{'프레임(대)':1,'사이드레일 L':1,'사이드레일 R':1,'슬랫(12개입)':1,'볼트세트A':1,'조립설명서':1},'A형 침대 퀸':{'프레임(대)':1,'프레임(소)':1,'사이드레일 L':1,'사이드레일 R':1,'슬랫(12개입)':2,'볼트세트A':1,'조립설명서':1}}
@@ -229,7 +229,7 @@ function popBatchDriverSel(){const sel=document.getElementById('batchDriver'),cu
 function populateBatchCatSel(){const sel=document.getElementById('bc_cat');const cur=sel.value;sel.innerHTML='<option value="">선택</option>';CFG.categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===cur)o.selected=true;sel.appendChild(o)})}
 function bShowW(id,v){const el=document.getElementById(id);if(el)el.style.display=v?'block':'none'}
 function bPopSel(id,arr){const el=document.getElementById(id);if(!el)return;el.innerHTML='<option value="">선택</option>';arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)})}
-function bResetFrom(step){if(step<=2){BSEL.sub='';bShowW('bc_sub_w',false)}if(step<=3){BSEL.model='';bShowW('bc_model_w',false)}if(step<=4){BSEL.size='';bShowW('bc_size_w',false)}if(step<=5){BSEL.color='';bShowW('bc_color_w',false)}bShowW('bc_add_row',false);document.getElementById('bc_preview_name').textContent=''}
+function bResetFrom(step){if(step<=2){BSEL.sub='';bShowW('bc_sub_w',false)}if(step<=3){BSEL.model='';bShowW('bc_model_w',false)}if(step<=4){BSEL.size='';bShowW('bc_size_w',false)}if(step<=5){BSEL.color='';bShowW('bc_color_w',false)}BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize='';bShowW('bc_mattyn_w',false);bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false);document.getElementById('bc_preview_name').textContent=''}
 
 window.bOnCat=function(){BSEL.cat=document.getElementById('bc_cat').value;bResetFrom(2);if(!BSEL.cat)return;if(BSEL.cat==='침대'){document.getElementById('bc_sub_lbl').textContent='재질';bPopSel('bc_sub',CFG.pyunbaek)}else{document.getElementById('bc_sub_lbl').textContent='모델';bPopSel('bc_sub',CFG.models[BSEL.cat]||[])}bShowW('bc_sub_w',true)}
 function bGoToSizeOrColor(){
@@ -241,22 +241,70 @@ window.bOnSub=function(){BSEL.sub=document.getElementById('bc_sub').value;bReset
 window.bOnModel=function(){BSEL.model=document.getElementById('bc_model').value;bResetFrom(4);if(!BSEL.model)return;bGoToSizeOrColor()}
 window.bOnSize=function(){BSEL.size=document.getElementById('bc_size').value;bResetFrom(5);if(!BSEL.size)return;bPopSel('bc_color',CFG.colors);bShowW('bc_color_w',true)}
 window.bOnColor=function(){
-  BSEL.color=document.getElementById('bc_color').value;bShowW('bc_add_row',false)
+  BSEL.color=document.getElementById('bc_color').value
+  BSEL.mattyn='';BSEL.matttype='';BSEL.mattsize=''
+  bShowW('bc_mattyn_w',false);bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false)
   if(!BSEL.color)return
+  // 매트 대상 모델 확인
+  const mk=BSEL.cat==='침대'?(BSEL.sub.includes('편백')?BSEL.sub:BSEL.model):BSEL.sub
+  if(CFG.mattModels.includes(mk)){
+    bShowW('bc_mattyn_w',true)
+    const sel=document.getElementById('bc_mattyn');if(sel)sel.value=''
+  } else {
+    bShowFinal()
+  }
+}
+window.bOnMattYn=function(){
+  BSEL.mattyn=document.getElementById('bc_mattyn').value
+  BSEL.matttype='';BSEL.mattsize=''
+  bShowW('bc_matttype_w',false);bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false)
+  if(!BSEL.mattyn)return
+  if(BSEL.mattyn==='있음'){
+    bShowW('bc_matttype_w',true)
+    const sel=document.getElementById('bc_matttype');if(sel){sel.innerHTML='<option value="">선택</option>';CFG.mattTypes.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)})}
+  } else {
+    bShowFinal()
+  }
+}
+window.bOnMattType=function(){
+  BSEL.matttype=document.getElementById('bc_matttype').value
+  BSEL.mattsize='';bShowW('bc_mattsize_w',false);bShowW('bc_add_row',false)
+  if(!BSEL.matttype)return
+  bShowW('bc_mattsize_w',true)
+  const sel=document.getElementById('bc_mattsize');if(sel){sel.innerHTML='<option value="">선택</option>';CFG.mattSizes.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)})}
+}
+window.bOnMattSize=function(){
+  BSEL.mattsize=document.getElementById('bc_mattsize').value
+  if(!BSEL.mattsize)return
+  bShowFinal()
+}
+function bShowFinal(){
   const name=bBuildName()
-  document.getElementById('bc_preview_name').textContent='✅ '+name+(S.products[name]?'':'  ⚠ 부품 구성 미등록')
+  let mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:''
+  document.getElementById('bc_preview_name').textContent='✅ '+name+mattStr+(S.products[name]?'':'  ⚠ 부품 구성 미등록')
   bShowW('bc_add_row',true)
 }
 function bBuildName(){
-  if(BSEL.cat==='침대'){if(BSEL.sub.includes('편백'))return`침대 ${BSEL.sub} ${BSEL.size} ${BSEL.color}`;return`침대 ${BSEL.sub} ${BSEL.model} ${BSEL.size} ${BSEL.color}`}
-  return`${BSEL.cat} ${BSEL.sub} ${BSEL.color}`
+  let base=''
+  if(BSEL.cat==='침대'){
+    if(BSEL.sub.includes('편백'))base=`침대 ${BSEL.sub} ${BSEL.size} ${BSEL.color}`
+    else base=`침대 ${BSEL.sub} ${BSEL.model} ${BSEL.size} ${BSEL.color}`
+  } else {
+    base=BSEL.size?`${BSEL.cat} ${BSEL.sub} ${BSEL.size} ${BSEL.color}`:`${BSEL.cat} ${BSEL.sub} ${BSEL.color}`
+  }
+  return base
+}
+function bBuildFullName(){
+  const base=bBuildName()
+  const mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:''
+  return base+mattStr
 }
 
 window.addToCart=function(){
-  const name=bBuildName(),qty=parseInt(document.getElementById('bc_qty').value)||1
+  const name=bBuildFullName(),baseName=bBuildName(),qty=parseInt(document.getElementById('bc_qty').value)||1
   const customer=document.getElementById('bc_customer').value.trim(),addr=document.getElementById('bc_addr').value.trim()
-  cart.push({name,qty,customer,addr,parts:S.products[name]||null})
-  document.getElementById('bc_cat').value='';BSEL={cat:'',sub:'',model:'',size:'',color:''}
+  cart.push({name,qty,customer,addr,parts:S.products[baseName]||null})
+  document.getElementById('bc_cat').value='';BSEL={cat:'',sub:'',model:'',size:'',color:'',mattyn:'',matttype:'',mattsize:''}
   bResetFrom(2);document.getElementById('bc_qty').value=1;document.getElementById('bc_customer').value='';document.getElementById('bc_addr').value=''
   renderCart();renderBatchSummary();showToast(name+' 담기 완료')
 }
