@@ -415,14 +415,70 @@ window.closeM=()=>document.getElementById('modalContainer').innerHTML=''
 window.closeMBg=(e)=>{if(e.target.classList.contains('modal-bg'))window.closeM()}
 
 // ── 옵션 관리 ────────────────────────────────────────
-function renderOptMgmt(){renderOptTags('opt-cat','categories');renderOptTags('opt-pyun','pyunbaek');renderOptTags('opt-size','sizes');renderOptTags('opt-color','colors');renderOptTags('opt-matt','mattTypes');renderOptTags('opt-mattsize','mattSizes');const sel=document.getElementById('model-cat-sel');sel.innerHTML='<option value="">카테고리 선택</option>';CFG.categories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)});renderOptModels();renderOptMattModels();populateCatSel();populateBatchCatSel()}
+function renderOptMgmt(){
+  renderOptTags('opt-cat','categories')
+  renderOptTags('opt-pyun','pyunbaek')
+  renderOptTags('opt-size','sizes')
+  renderOptTags('opt-color','colors')
+  renderOptTags('opt-matt','mattTypes')
+  renderOptTags('opt-mattsize','mattSizes')
+  renderOptAllModels()   // ★ 드롭다운 대신 카테고리별 전체 표시
+  renderOptMattModels()
+  populateCatSel()
+  populateBatchCatSel()
+}
+
+// 카테고리별 모델을 한눈에 펼쳐서 표시
+function renderOptAllModels(){
+  const wrap=document.getElementById('opt-model-all')
+  if(!wrap)return
+  if(!CFG.categories.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;">카테고리를 먼저 추가하세요</div>';return}
+  wrap.innerHTML=CFG.categories.map(cat=>{
+    if(!CFG.models[cat])CFG.models[cat]=[]
+    const models=CFG.models[cat]
+    const modelRows=models.length
+      ? models.map((m,i)=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:4px;font-size:13px;">
+            <span>📦 ${m}</span>
+            <button class="danger small" onclick="removeOptModel('${cat.replace(/'/g,"\\'")}',${i})">삭제</button>
+          </div>`)
+        .join('')
+      : '<div style="font-size:13px;color:#9ca3af;padding:4px 0;">등록된 모델 없음</div>'
+
+    return`
+    <div style="margin-bottom:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;">
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">
+        📂 ${cat} <span style="font-size:12px;font-weight:400;color:#9ca3af;">(${models.length}개)</span>
+      </div>
+      ${modelRows}
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input type="text" id="inp-model-${cat.replace(/\s/g,'_')}" placeholder="${cat} 모델명 입력" style="flex:1;font-size:13px;padding:6px 10px;">
+        <button class="secondary small" onclick="addOptModelForCat('${cat.replace(/'/g,"\\'")}')">추가</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+window.addOptModelForCat=async function(cat){
+  const inputId='inp-model-'+cat.replace(/\s/g,'_')
+  const v=document.getElementById(inputId).value.trim()
+  if(!v)return
+  if(!CFG.models[cat])CFG.models[cat]=[]
+  if(CFG.models[cat].includes(v)){showToast('이미 존재합니다.','warn');return}
+  CFG.models[cat].push(v)
+  document.getElementById(inputId).value=''
+  await save()
+  renderOptAllModels()
+  renderOptMattModels()
+  populateCatSel()
+  populateBatchCatSel()
+  showToast(v+' 추가됨')
+}
+
 function renderOptTags(id,key){const w=document.getElementById(id);if(!CFG[key]||!CFG[key].length){w.innerHTML='<span style="font-size:13px;color:#6b7280;">항목 없음</span>';return}w.innerHTML=CFG[key].map((v,i)=>`<span class="opt-tag">${v}<button onclick="removeOptItem('${key}',${i})">×</button></span>`).join('')}
 window.addOptItem=async function(key,inputId){const v=document.getElementById(inputId).value.trim();if(!v)return;if(CFG[key].includes(v)){showToast('이미 존재합니다.','warn');return}CFG[key].push(v);document.getElementById(inputId).value='';await save();renderOptMgmt();showToast(v+' 추가됨')}
 window.removeOptItem=async function(key,i){CFG[key].splice(i,1);await save();renderOptMgmt()}
-function renderOptModels(){const cat=document.getElementById('model-cat-sel').value,list=document.getElementById('opt-model-list'),addRow=document.getElementById('opt-model-add');if(!cat){list.innerHTML='<div style="font-size:13px;color:#6b7280;">카테고리를 선택하세요</div>';addRow.style.display='none';return}addRow.style.display='flex';if(!CFG.models[cat])CFG.models[cat]=[];const models=CFG.models[cat];if(!models.length){list.innerHTML='<div style="font-size:13px;color:#6b7280;margin-bottom:8px;">등록된 모델 없음</div>';return}list.innerHTML=models.map((m,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f3f4f6;border-radius:8px;margin-bottom:4px;font-size:13px;"><span>📦 ${m}</span><button class="danger small" onclick="removeOptModel('${cat}',${i})">삭제</button></div>`).join('')}
-window.renderOptModels=renderOptModels
-window.addOptModel=async function(){const cat=document.getElementById('model-cat-sel').value,v=document.getElementById('inp-model').value.trim();if(!cat||!v)return;if(!CFG.models[cat])CFG.models[cat]=[];if(CFG.models[cat].includes(v)){showToast('이미 존재합니다.','warn');return}CFG.models[cat].push(v);document.getElementById('inp-model').value='';await save();renderOptModels();renderOptMattModels();showToast(v+' 추가됨')}
-window.removeOptModel=async function(cat,i){CFG.models[cat].splice(i,1);await save();renderOptModels();renderOptMattModels()}
+window.removeOptModel=async function(cat,i){CFG.models[cat].splice(i,1);await save();renderOptAllModels();renderOptMattModels()}
 function renderOptMattModels(){const wrap=document.getElementById('opt-matt-models'),allModels=[];Object.entries(CFG.models).forEach(([cat,ms])=>ms.forEach(m=>allModels.push({cat,m})));CFG.pyunbaek.forEach(p=>allModels.push({cat:'침대(편백재질)',m:p}));if(!allModels.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;">모델을 먼저 등록하세요</div>';return}wrap.innerHTML=allModels.map(({cat,m})=>{const uid='mc_'+m.replace(/[\s()\/]/g,'_');const checked=CFG.mattModels.includes(m);return`<div class="check-row"><input type="checkbox" id="${uid}" ${checked?'checked':''} onchange="toggleMattModel('${m.replace(/'/g,"\\'")}',this.checked)"><label for="${uid}">[${cat}] ${m}</label></div>`}).join('')}
 window.toggleMattModel=async function(model,checked){if(checked){if(!CFG.mattModels.includes(model))CFG.mattModels.push(model)}else{CFG.mattModels=CFG.mattModels.filter(m=>m!==model)}await save()}
 
@@ -475,7 +531,118 @@ window.saveProduct=async function(){
   document.getElementById('newProdName').value='';partSlots=[{part:'',qty:1}];renderPartSlots();renderProdList()
   showToast(name+' 제품 저장 완료')
 }
-function renderProdList(){const tbody=document.getElementById('prodListBody'),entries=Object.entries(S.products).sort();if(!entries.length){tbody.innerHTML='<tr><td colspan="3" class="empty-state">등록된 제품 없음</td></tr>';return}tbody.innerHTML=entries.map(([name,parts])=>`<tr><td style="font-size:13px;font-weight:500;">${name}</td><td style="font-size:12px;color:#6b7280;">${Object.entries(parts).map(([p,n])=>p+(n>1?'x'+n:'')).join(', ')}</td><td><button class="danger" onclick="deleteProd('${name.replace(/'/g,"\\'")}')">삭제</button></td></tr>`).join('')}
+function renderProdList(){
+  const tbody=document.getElementById('prodListBody'),entries=Object.entries(S.products).sort()
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">등록된 제품 없음</td></tr>';return}
+  tbody.innerHTML=entries.map(([name,parts])=>`
+    <tr>
+      <td style="font-size:13px;font-weight:500;">${name}</td>
+      <td style="font-size:12px;color:#6b7280;">${Object.entries(parts).map(([p,n])=>p+(n>1?'×'+n:'')).join(', ')}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="warning" onclick="openEditProdModal('${name.replace(/'/g,"\\'")}')">수정</button>
+          <button class="danger" onclick="deleteProd('${name.replace(/'/g,"\\'")}')">삭제</button>
+        </div>
+      </td>
+    </tr>`).join('')
+}
+
+window.openEditProdModal=function(name){
+  const parts=S.products[name]||{}
+  const pn=Object.keys(S.parts).sort()
+  // 현재 부품 구성을 editSlots로 변환
+  const slots=Object.entries(parts).map(([p,n])=>({part:p,qty:n}))
+  if(!slots.length)slots.push({part:'',qty:1})
+
+  function slotsHtml(arr){
+    return arr.map((s,i)=>`
+      <div class="part-row" id="eslot_wrap_${i}">
+        <select id="eslot_${i}" style="flex:1;font-size:13px;">
+          <option value="">-- 부품 선택 --</option>
+          ${pn.map(p=>`<option value="${p}"${s.part===p?' selected':''}>${p}</option>`).join('')}
+        </select>
+        <input type="number" id="eslot_qty_${i}" min="1" value="${s.qty}" style="width:60px;">
+        <button class="danger" style="padding:5px 8px;font-size:12px;" onclick="removeESlot(${i})">X</button>
+      </div>`).join('')
+  }
+
+  // eslots를 window에 저장
+  window._editSlots=slots
+  window._editProdName=name
+
+  document.getElementById('modalContainer').innerHTML=`
+  <div class="modal-bg" onclick="closeMBg(event)">
+    <div class="modal" style="width:480px;max-width:95vw;">
+      <h4>✏️ 제품 수정</h4>
+      <div class="modal-field">
+        <label class="modal-label">제품명</label>
+        <input type="text" id="edit_prod_name" value="${name}" style="width:100%;">
+      </div>
+      <div class="modal-label" style="margin-bottom:6px;">부품 구성</div>
+      <div id="eslots_wrap">${slotsHtml(slots)}</div>
+      <button class="secondary" style="font-size:13px;margin-top:8px;margin-bottom:16px;" onclick="addESlot()">+ 부품 추가</button>
+      <div class="modal-actions">
+        <button class="secondary" onclick="closeM()">취소</button>
+        <button class="primary" onclick="confirmEditProd('${name.replace(/'/g,"\\'")}')">저장</button>
+      </div>
+    </div>
+  </div>`
+}
+
+window.addESlot=function(){
+  // 현재 DOM 값 읽기
+  syncESlots()
+  window._editSlots.push({part:'',qty:1})
+  reRenderESlots()
+}
+
+window.removeESlot=function(i){
+  syncESlots()
+  window._editSlots.splice(i,1)
+  if(!window._editSlots.length)window._editSlots.push({part:'',qty:1})
+  reRenderESlots()
+}
+
+function syncESlots(){
+  window._editSlots.forEach((s,i)=>{
+    const sel=document.getElementById('eslot_'+i)
+    const qty=document.getElementById('eslot_qty_'+i)
+    if(sel)s.part=sel.value
+    if(qty)s.qty=parseInt(qty.value)||1
+  })
+}
+
+function reRenderESlots(){
+  const pn=Object.keys(S.parts).sort()
+  const wrap=document.getElementById('eslots_wrap')
+  if(!wrap)return
+  wrap.innerHTML=window._editSlots.map((s,i)=>`
+    <div class="part-row" id="eslot_wrap_${i}">
+      <select id="eslot_${i}" style="flex:1;font-size:13px;">
+        <option value="">-- 부품 선택 --</option>
+        ${pn.map(p=>`<option value="${p}"${s.part===p?' selected':''}>${p}</option>`).join('')}
+      </select>
+      <input type="number" id="eslot_qty_${i}" min="1" value="${s.qty}" style="width:60px;">
+      <button class="danger" style="padding:5px 8px;font-size:12px;" onclick="removeESlot(${i})">X</button>
+    </div>`).join('')
+}
+
+window.confirmEditProd=async function(oldName){
+  syncESlots()
+  const newName=document.getElementById('edit_prod_name').value.trim()
+  if(!newName){showToast('제품명을 입력하세요.','warn');return}
+  const c={}
+  window._editSlots.forEach(s=>{if(s.part)c[s.part]=s.qty})
+  if(!Object.keys(c).length){showToast('부품을 하나 이상 선택하세요.','warn');return}
+  // 이름이 바뀌면 기존 키 삭제
+  if(newName!==oldName){delete S.products[oldName]}
+  S.products[newName]=c
+  await save()
+  closeM()
+  renderProdList()
+  showToast(newName+' 수정 완료')
+}
+
 window.deleteProd=async function(name){if(!confirm(name+' 제품을 삭제할까요?'))return;delete S.products[name];await save();renderProdList();showToast(name+' 삭제됨')}
 
 // ── 엑셀 ─────────────────────────────────────────────
