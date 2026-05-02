@@ -497,8 +497,9 @@ function renderOptAllModels(){
     const models=CFG.models[cat]
     const modelRows=models.length
       ? models.map((m,i)=>`
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:4px;font-size:13px;">
-            <span>📦 ${m}</span>
+          <div id="mrow_${cat.replace(/\s/g,'_')}_${i}" style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:4px;font-size:13px;">
+            <span style="flex:1;">📦 ${m}</span>
+            <button class="warning small" onclick="startEditModel('${cat.replace(/'/g,"\\'")}',${i},'${m.replace(/'/g,"\\'")}')">수정</button>
             <button class="danger small" onclick="removeOptModel('${cat.replace(/'/g,"\\'")}',${i})">삭제</button>
           </div>`)
         .join('')
@@ -537,6 +538,33 @@ window.addOptModelForCat=async function(cat){
 function renderOptTags(id,key){const w=document.getElementById(id);if(!CFG[key]||!CFG[key].length){w.innerHTML='<span style="font-size:13px;color:#6b7280;">항목 없음</span>';return}w.innerHTML=CFG[key].map((v,i)=>`<span class="opt-tag">${v}<button onclick="removeOptItem('${key}',${i})">×</button></span>`).join('')}
 window.addOptItem=async function(key,inputId){const v=document.getElementById(inputId).value.trim();if(!v)return;if(CFG[key].includes(v)){showToast('이미 존재합니다.','warn');return}CFG[key].push(v);document.getElementById(inputId).value='';await save();renderOptMgmt();showToast(v+' 추가됨')}
 window.removeOptItem=async function(key,i){CFG[key].splice(i,1);await save();renderOptMgmt()}
+window.startEditModel=function(cat,i,oldName){
+  // 해당 행을 인라인 편집 모드로 전환
+  const rowId='mrow_'+cat.replace(/\s/g,'_')+'_'+i
+  const row=document.getElementById(rowId)
+  if(!row)return
+  row.innerHTML=`
+    <input type="text" id="medit_input" value="${oldName}" style="flex:1;font-size:13px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;">
+    <button class="primary small" onclick="confirmEditModel('${cat.replace(/'/g,"\\'")}',${i})">저장</button>
+    <button class="secondary small" onclick="renderOptAllModels()">취소</button>`
+  setTimeout(()=>{const inp=document.getElementById('medit_input');if(inp){inp.focus();inp.select();}},50)
+}
+window.confirmEditModel=async function(cat,i){
+  const inp=document.getElementById('medit_input')
+  if(!inp)return
+  const newName=inp.value.trim()
+  if(!newName){showToast('모델명을 입력하세요.','warn');return}
+  const oldName=CFG.models[cat][i]
+  if(newName===oldName){renderOptAllModels();return}
+  if(CFG.models[cat].includes(newName)){showToast('이미 존재하는 모델명입니다.','warn');return}
+  CFG.models[cat][i]=newName
+  // mattModels에서도 교체
+  const mi=CFG.mattModels.indexOf(oldName)
+  if(mi>=0)CFG.mattModels[mi]=newName
+  await save()
+  renderOptAllModels();renderOptMattModels()
+  showToast(newName+' 수정 완료')
+}
 window.removeOptModel=async function(cat,i){CFG.models[cat].splice(i,1);await save();renderOptAllModels();renderOptMattModels()}
 function renderOptMattModels(){const wrap=document.getElementById('opt-matt-models'),allModels=[];Object.entries(CFG.models).forEach(([cat,ms])=>ms.forEach(m=>allModels.push({cat,m})));CFG.pyunbaek.forEach(p=>allModels.push({cat:'침대(편백재질)',m:p}));if(!allModels.length){wrap.innerHTML='<div style="font-size:13px;color:#6b7280;">모델을 먼저 등록하세요</div>';return}wrap.innerHTML=allModels.map(({cat,m})=>{const uid='mc_'+m.replace(/[\s()\/]/g,'_');const checked=CFG.mattModels.includes(m);return`<div class="check-row"><input type="checkbox" id="${uid}" ${checked?'checked':''} onchange="toggleMattModel('${m.replace(/'/g,"\\'")}',this.checked)"><label for="${uid}">[${cat}] ${m}</label></div>`}).join('')}
 window.toggleMattModel=async function(model,checked){if(checked){if(!CFG.mattModels.includes(model))CFG.mattModels.push(model)}else{CFG.mattModels=CFG.mattModels.filter(m=>m!==model)}await save()}
