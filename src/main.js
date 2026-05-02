@@ -316,6 +316,8 @@ function bBuildName(){
   if(BSEL.cat==='침대'){
     if(BSEL.sub.includes('편백'))base=`침대 ${BSEL.sub} ${BSEL.size} ${BSEL.color}`
     else base=`침대 ${BSEL.sub} ${BSEL.model} ${BSEL.size} ${BSEL.color}`
+  } else if(isNoColor(BSEL.cat)){
+    base=BSEL.size?`${BSEL.cat} ${BSEL.sub} ${BSEL.size}`:`${BSEL.cat} ${BSEL.sub}`
   } else {
     base=BSEL.size?`${BSEL.cat} ${BSEL.sub} ${BSEL.size} ${BSEL.color}`:`${BSEL.cat} ${BSEL.sub} ${BSEL.color}`
   }
@@ -325,7 +327,7 @@ function bBuildFullName(){
   const base=bBuildName()
   const memoStr=BSEL.memo?` [${BSEL.memo}]`:''
   const mattStr=BSEL.mattyn==='있음'&&BSEL.matttype&&BSEL.mattsize?` + 매트리스(${BSEL.matttype} ${BSEL.mattsize})`:''
-  return base+mattStr
+  return base+memoStr+mattStr
 }
 
 window.bOnMemoInput=function(){
