@@ -397,32 +397,57 @@
 
   <!-- 관리 -->
   <div class="section" id="tab-관리">
+
+    <!-- 기사 관리 -->
     <div class="card"><h3>기사 관리</h3><div class="row"><input type="text" id="newDriverName" placeholder="기사명 입력" style="width:200px;"><button class="secondary" onclick="addDriver()">추가</button></div><div id="driverChips" style="margin-top:4px;"></div></div>
+
+    <!-- 부품 관리 -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">부품 관리</h3><div style="display:flex;gap:8px;"><input type="text" id="searchPartMgmt" placeholder="부품명 검색..." oninput="renderPartMgmt()" style="width:150px;font-size:13px;"><button class="primary" style="font-size:13px;" onclick="openAddPartModal()">+ 부품 추가</button></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">부품 관리</h3>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="searchPartMgmt" placeholder="부품명 검색..." oninput="renderPartMgmt()" style="width:150px;font-size:13px;">
+          <button class="primary" style="font-size:13px;" onclick="openAddPartModal()">+ 부품 추가</button>
+        </div>
+      </div>
       <table><thead><tr><th>부품명</th><th>현재 재고</th><th>최소 재고</th><th>상태</th><th style="width:130px;">관리</th></tr></thead><tbody id="partMgmtBody"></tbody></table>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-      <div class="card"><h3>제품 등록 (부품 구성)</h3><div class="row"><input type="text" id="newProdName" placeholder="제품명" style="flex:1;"></div><div id="prodPartsList"></div><button class="secondary" style="font-size:13px;margin-bottom:8px;" onclick="addPartSlot()">+ 부품 추가</button><div><button class="secondary" onclick="saveProduct()">제품 저장</button></div></div>
-      <div class="card"><h3>등록된 제품 목록</h3><table><thead><tr><th>제품명</th><th>구성 부품</th><th style="width:100px;">관리</th></tr></thead><tbody id="prodListBody"></tbody></table></div>
-    </div>
-    <div class="card">
-      <h3>⚙️ 제품 선택 옵션 관리</h3>
-      <p style="font-size:13px;color:#6b7280;margin-bottom:1.2rem;">출고 처리 화면의 계층 드롭다운 옵션을 편집합니다.</p>
-      <div class="mgmt-sec"><h4>1단계 — 카테고리</h4><div class="tag-wrap" id="opt-cat"></div><div class="add-row"><input type="text" id="inp-cat" placeholder="예: 장롱"><button class="secondary small" onclick="addOptItem('categories','inp-cat')">추가</button></div></div>
-      <div class="mgmt-sec"><h4>2단계 — 침대: 재질</h4><p class="note">이름에 "편백"이 포함되면 모델 없이 바로 사이즈로 이동합니다.</p><div class="tag-wrap" id="opt-pyun"></div><div class="add-row"><input type="text" id="inp-pyun" placeholder="예: 편백, 일반(원목)"><button class="secondary small" onclick="addOptItem('pyunbaek','inp-pyun')">추가</button></div></div>
-      <div class="mgmt-sec"><h4>3단계 — 모델 (카테고리별)</h4>
-        <p class="note">카테고리마다 모델을 따로 추가/삭제할 수 있습니다. 카테고리를 먼저 1단계에서 추가하세요.</p>
-        <div id="opt-model-all"></div>
-      </div>
-      <div class="mgmt-sec"><h4>4단계 — 사이즈</h4><div class="tag-wrap" id="opt-size"></div><div class="add-row"><input type="text" id="inp-size" placeholder="예: 싱글, 슈퍼싱글, 퀸, 킹"><button class="secondary small" onclick="addOptItem('sizes','inp-size')">추가</button></div></div>
-      <div class="mgmt-sec"><h4>5단계 — 색상</h4><div class="tag-wrap" id="opt-color"></div><div class="add-row"><input type="text" id="inp-color" placeholder="예: 화이트, 월넛, 오크"><button class="secondary small" onclick="addOptItem('colors','inp-color')">추가</button></div></div>
-      <div class="mgmt-sec"><h4>6단계 — 매트리스 선택 대상 모델</h4><p class="note">✅ 체크된 모델은 색상 선택 후 매트리스 여부 선택이 나타납니다.</p><div id="opt-matt-models"></div></div>
-      <div class="mgmt-sec"><h4>7단계 — 매트리스 종류</h4><div class="tag-wrap" id="opt-matt"></div><div class="add-row"><input type="text" id="inp-matt" placeholder="예: 본넬스프링, 포켓스프링"><button class="secondary small" onclick="addOptItem('mattTypes','inp-matt')">추가</button></div></div>
-      <div class="mgmt-sec"><h4>8단계 — 매트리스 사이즈</h4><div class="tag-wrap" id="opt-mattsize"></div><div class="add-row"><input type="text" id="inp-mattsize" placeholder="예: 싱글, 퀸, 킹"><button class="secondary small" onclick="addOptItem('mattSizes','inp-mattsize')">추가</button></div></div>
-    </div>
-  </div>
 
+    <!-- 옵션 설정 -->
+    <div class="card">
+      <h3>⚙️ 옵션 설정</h3>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">옵션을 설정하고 <strong>"제품 목록 생성"</strong> 버튼을 누르면 모든 조합이 자동으로 제품 목록에 생성됩니다.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px;">
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>카테고리</h4><div class="tag-wrap" id="opt-cat"></div><div class="add-row"><input type="text" id="inp-cat" placeholder="예: 슈랑크"><button class="secondary small" onclick="addOptItem('categories','inp-cat')">추가</button></div></div>
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>침대 재질</h4><p class="note">편백 포함시 모델 단계 생략</p><div class="tag-wrap" id="opt-pyun"></div><div class="add-row"><input type="text" id="inp-pyun" placeholder="예: 편백, 일반(원목)"><button class="secondary small" onclick="addOptItem('pyunbaek','inp-pyun')">추가</button></div></div>
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>침대 사이즈</h4><div class="tag-wrap" id="opt-size"></div><div class="add-row"><input type="text" id="inp-size" placeholder="예: 싱글, 퀸, 킹"><button class="secondary small" onclick="addOptItem('sizes','inp-size')">추가</button></div></div>
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>색상</h4><div class="tag-wrap" id="opt-color"></div><div class="add-row"><input type="text" id="inp-color" placeholder="예: 화이트, 월넛"><button class="secondary small" onclick="addOptItem('colors','inp-color')">추가</button></div></div>
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>매트리스 종류</h4><div class="tag-wrap" id="opt-matt"></div><div class="add-row"><input type="text" id="inp-matt" placeholder="예: 본넬스프링"><button class="secondary small" onclick="addOptItem('mattTypes','inp-matt')">추가</button></div></div>
+        <div class="mgmt-sec" style="margin-bottom:0;"><h4>매트리스 사이즈</h4><div class="tag-wrap" id="opt-mattsize"></div><div class="add-row"><input type="text" id="inp-mattsize" placeholder="예: 싱글, 퀸"><button class="secondary small" onclick="addOptItem('mattSizes','inp-mattsize')">추가</button></div></div>
+      </div>
+      <div class="mgmt-sec" style="margin-bottom:10px;"><h4>모델 (카테고리별)</h4><div id="opt-model-all"></div></div>
+      <div class="mgmt-sec" style="margin-bottom:10px;"><h4>카테고리별 사이즈 <span style="font-size:11px;font-weight:400;color:#9ca3af;">(침대 외 — 비우면 사이즈 단계 생략)</span></h4><div id="opt-cat-sizes"></div></div>
+      <div class="mgmt-sec" style="margin-bottom:0;"><h4>매트리스 선택 대상 모델</h4><p class="note">체크된 모델은 색상 선택 후 매트리스 여부 선택이 나타납니다.</p><div id="opt-matt-models"></div></div>
+    </div>
+
+    <!-- 제품 목록 + 부품 구성 통합 -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">📦 제품 목록 &amp; 부품 구성</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="text" id="prod-search" placeholder="제품명 검색..." oninput="renderIntegratedProdList()" style="width:160px;font-size:13px;">
+          <button class="primary" onclick="autoGenProds()">🔄 제품 목록 생성</button>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#6b7280;margin-bottom:10px;">옵션 설정 후 <strong>제품 목록 생성</strong> 버튼으로 조합을 자동 생성하세요. 각 제품 옆 <strong>부품 등록</strong>으로 부품을 바로 설정할 수 있습니다.</p>
+      <div id="prod-cat-filter" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
+      <table>
+        <thead><tr><th>제품명</th><th style="width:220px;">구성 부품</th><th style="width:120px;">관리</th></tr></thead>
+        <tbody id="integratedProdBody"></tbody>
+      </table>
+    </div>
+
+  </div>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>
