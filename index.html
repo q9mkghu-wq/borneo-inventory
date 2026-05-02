@@ -5,96 +5,152 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>보루네오 재고 관리</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; color: #111827; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-    .tabs { display: flex; gap: 3px; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
-    .tab { padding: 7px 11px; font-size: 13px; cursor: pointer; border: none; background: none; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
-    .tab.active { color: #111827; border-bottom-color: #111827; font-weight: 500; }
-    .section { display: none; } .section.active { display: block; }
-    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
-    .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    select, input[type=text], input[type=number] { font-size: 14px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; }
-    select { flex: 1; }
-    button.primary { background: #111827; color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 500; }
-    button.secondary { background: none; color: #111827; border: 1px solid #d1d5db; padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    button.success { background: none; color: #065f46; border: 1px solid #10b981; padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
-    button.danger { background: none; color: #dc2626; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .badge { font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
-    .badge.ok { background: #d1fae5; color: #065f46; }
-    .badge.low { background: #fef3c7; color: #92400e; }
-    .badge.empty { background: #fee2e2; color: #991b1b; }
-    .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 1.5rem; }
-    .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 1rem; }
-    .metric { background: #f3f4f6; border-radius: 8px; padding: 1rem; }
-    .metric-label { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
-    .metric-val { font-size: 22px; font-weight: 500; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; padding: 8px 10px; font-weight: 500; font-size: 13px; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
-    td { padding: 9px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    .part-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .sync-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f3f4f6; border-radius: 8px; margin-bottom: 1rem; font-size: 13px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .dot.live { background: #10b981; animation: pulse 2s infinite; }
-    .dot.loading { background: #f59e0b; }
-    .dot.error { background: #ef4444; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
-    .preview-box { background: #f3f4f6; border-radius: 8px; padding: 1rem; margin-top: 10px; }
-    .prow { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; border-bottom: 1px solid #e5e7eb; }
-    .prow:last-child { border-bottom: none; }
-    .warn-text { color: #d97706; font-size: 13px; margin-top: 6px; }
-    .alert-banner { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
-    .alert-banner.warn { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
-    .alert-banner.err { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
-    .history-item { padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
-    .history-item:last-child { border-bottom: none; }
-    .tag { font-size: 12px; background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 12px; }
-    h3 { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
-    .empty-state { text-align: center; padding: 2rem; color: #9ca3af; font-size: 14px; }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #e5e7eb; border-top-color: #111827; border-radius: 50%; animation: spin .7s linear infinite; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .pbtn { padding: 6px 14px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 8px; background: none; color: #6b7280; cursor: pointer; }
-    .pbtn.active { background: #111827; color: #fff; border-color: #111827; }
-    .bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-    .bar-label { font-size: 13px; min-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar-track { flex: 1; background: #f3f4f6; border-radius: 4px; height: 14px; overflow: hidden; }
-    .bar-fill { height: 14px; border-radius: 4px; transition: width .3s; }
-    .bar-val { font-size: 13px; color: #6b7280; min-width: 42px; text-align: right; }
-    .rank-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 500; flex-shrink: 0; margin-right: 4px; background: #f3f4f6; color: #6b7280; }
-    .rank-num.gold { background: #fef3c7; color: #92400e; }
-    .rank-num.silver { background: #f3f4f6; color: #6b7280; }
-    .rank-num.bronze { background: #fee2e2; color: #991b1b; }
-    .driver-chip { display: inline-flex; align-items: center; gap: 6px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; padding: 5px 10px 5px 12px; font-size: 14px; margin: 4px; }
-    .driver-chip button { background: none; border: none; cursor: pointer; color: #9ca3af; padding: 0; line-height: 1; display: flex; align-items: center; }
-    .nav-row { display: flex; align-items: center; gap: 8px; }
-    .nav-row button { padding: 5px 12px; font-size: 13px; }
-    .nav-label { font-size: 14px; font-weight: 500; min-width: 110px; text-align: center; }
-    .driver-tab { padding: 7px 14px; font-size: 13px; cursor: pointer; border: 1px solid #d1d5db; border-radius: 8px; background: none; color: #6b7280; margin: 3px; }
-    .driver-tab.active { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
-    .timeline-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; flex-wrap: wrap; }
-    .timeline-row:last-child { border-bottom: none; }
-    .timeline-date { min-width: 90px; color: #6b7280; font-size: 13px; }
-    .chart-wrap { width: 100%; overflow-x: auto; margin-top: 8px; }
-    .predict-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
-    .predict-days { font-size: 24px; font-weight: 600; min-width: 50px; text-align: center; }
-    .predict-days.danger { color: #dc2626; }
-    .predict-days.warn { color: #d97706; }
-    .predict-days.ok { color: #10b981; }
-    .predict-info { flex: 1; }
-    .predict-name { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
-    .predict-detail { font-size: 12px; color: #6b7280; }
-    .report-driver { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
-    .report-driver-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .report-driver-name { font-size: 16px; font-weight: 500; }
-    .report-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
-    .report-metric { background: #f3f4f6; border-radius: 8px; padding: 10px; text-align: center; }
-    .report-metric-val { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
-    .report-metric-label { font-size: 11px; color: #6b7280; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9fafb;color:#111827;}
+    .container{max-width:1100px;margin:0 auto;padding:1.5rem;}
+    .tabs{display:flex;gap:3px;margin-bottom:1.5rem;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
+    .tab{padding:7px 11px;font-size:13px;cursor:pointer;border:none;background:none;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+    .tab.active{color:#111827;border-bottom-color:#111827;font-weight:500;}
+    .section{display:none;}.section.active{display:block;}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+    .row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+    select,input[type=text],input[type=number]{font-size:14px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111827;}
+    select{flex:1;}select:disabled{opacity:0.35;cursor:not-allowed;}
+    button.primary{background:#111827;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500;}
+    button.secondary{background:none;color:#111827;border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;}
+    button.success{background:none;color:#065f46;border:1px solid #10b981;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;}
+    button.warning{background:none;color:#92400e;border:1px solid #f59e0b;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
+    button.danger{background:none;color:#dc2626;border:1px solid #fca5a5;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
+    button.small{padding:5px 10px;font-size:12px;}
+    button:disabled{opacity:0.35;cursor:not-allowed;}
+    .badge{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500;}
+    .badge.ok{background:#d1fae5;color:#065f46;}
+    .badge.low{background:#fef3c7;color:#92400e;}
+    .badge.empty{background:#fee2e2;color:#991b1b;}
+    .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
+    .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:1rem;}
+    .metric{background:#f3f4f6;border-radius:8px;padding:1rem;}
+    .metric-label{font-size:13px;color:#6b7280;margin-bottom:6px;}
+    .metric-val{font-size:22px;font-weight:500;}
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    th{text-align:left;padding:8px 10px;font-weight:500;font-size:13px;color:#6b7280;border-bottom:1px solid #e5e7eb;}
+    td{padding:9px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    .part-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .sync-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f3f4f6;border-radius:8px;margin-bottom:1rem;font-size:13px;}
+    .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .dot.live{background:#10b981;animation:pulse 2s infinite;}
+    .dot.loading{background:#f59e0b;}
+    .dot.error{background:#ef4444;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .preview-box{background:#f3f4f6;border-radius:8px;padding:1rem;margin-top:10px;}
+    .prow{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid #e5e7eb;}
+    .prow:last-child{border-bottom:none;}
+    .warn-text{color:#d97706;font-size:13px;margin-top:6px;}
+    .alert-banner{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;}
+    .alert-banner.warn{background:#fef3c7;color:#92400e;border:1px solid #f59e0b;}
+    .alert-banner.err{background:#fee2e2;color:#991b1b;border:1px solid #ef4444;}
+    .history-item{padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;}
+    .history-item:last-child{border-bottom:none;}
+    .tag-sm{font-size:12px;background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:12px;}
+    h3{font-size:15px;font-weight:500;margin-bottom:12px;}
+    .empty-state{text-align:center;padding:2rem;color:#9ca3af;font-size:14px;}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#111827;border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pbtn{padding:6px 14px;font-size:13px;border:1px solid #d1d5db;border-radius:8px;background:none;color:#6b7280;cursor:pointer;}
+    .pbtn.active{background:#111827;color:#fff;border-color:#111827;}
+    .bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+    .bar-label{font-size:13px;min-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bar-track{flex:1;background:#f3f4f6;border-radius:4px;height:14px;overflow:hidden;}
+    .bar-fill{height:14px;border-radius:4px;transition:width .3s;}
+    .bar-val{font-size:13px;color:#6b7280;min-width:42px;text-align:right;}
+    .rank-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:500;flex-shrink:0;margin-right:4px;background:#f3f4f6;color:#6b7280;}
+    .rank-num.gold{background:#fef3c7;color:#92400e;}
+    .rank-num.silver{background:#f3f4f6;color:#6b7280;}
+    .rank-num.bronze{background:#fee2e2;color:#991b1b;}
+    .driver-chip{display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:5px 10px 5px 12px;font-size:14px;margin:4px;}
+    .driver-chip button{background:none;border:none;cursor:pointer;color:#9ca3af;padding:0;line-height:1;display:flex;align-items:center;}
+    .nav-row{display:flex;align-items:center;gap:8px;}
+    .nav-row button{padding:5px 12px;font-size:13px;}
+    .nav-label{font-size:14px;font-weight:500;min-width:110px;text-align:center;}
+    .driver-tab{padding:7px 14px;font-size:13px;cursor:pointer;border:1px solid #d1d5db;border-radius:8px;background:none;color:#6b7280;margin:3px;}
+    .driver-tab.active{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd;}
+    .timeline-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:14px;flex-wrap:wrap;}
+    .timeline-row:last-child{border-bottom:none;}
+    .timeline-date{min-width:90px;color:#6b7280;font-size:13px;}
+    .chart-wrap{width:100%;overflow-x:auto;margin-top:8px;}
+    .predict-card{border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+    .predict-days{font-size:24px;font-weight:600;min-width:50px;text-align:center;}
+    .predict-days.danger{color:#dc2626;}.predict-days.warn{color:#d97706;}.predict-days.ok{color:#10b981;}
+    .predict-info{flex:1;}
+    .predict-name{font-size:14px;font-weight:500;margin-bottom:3px;}
+    .predict-detail{font-size:12px;color:#6b7280;}
+    .report-driver{border:1px solid #e5e7eb;border-radius:12px;padding:1rem;margin-bottom:1rem;}
+    .report-driver-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .report-driver-name{font-size:16px;font-weight:500;}
+    .report-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+    .report-metric{background:#f3f4f6;border-radius:8px;padding:10px;text-align:center;}
+    .report-metric-val{font-size:20px;font-weight:600;margin-bottom:2px;}
+    .report-metric-label{font-size:11px;color:#6b7280;}
+    /* 모달 */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:200;}
+    .modal{background:#fff;border-radius:12px;padding:1.5rem;width:360px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+    .modal h4{font-size:16px;font-weight:500;margin-bottom:1.2rem;}
+    .modal-label{font-size:13px;color:#6b7280;margin-bottom:4px;display:block;}
+    .modal-field{margin-bottom:12px;}
+    .modal-field input{width:100%;}
+    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+    /* 계층 선택 */
+    .step-wrap{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
+    .step-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:20px;}
+    .step-badge.on{background:#111827;color:#fff;}
+    .step-badge.off{background:#f3f4f6;color:#9ca3af;}
+    .step-inner{flex:1;}
+    .step-inner label{display:block;font-size:13px;color:#6b7280;margin-bottom:5px;font-weight:500;}
+    .result-sel{background:#f0fdf4;border-radius:8px;padding:1rem;margin-top:10px;border:1px solid #bbf7d0;}
+    .result-sel-title{font-size:15px;font-weight:600;color:#065f46;margin-bottom:4px;}
+    .result-sel-path{font-size:12px;color:#6b7280;margin-bottom:8px;}
+    /* 옵션 관리 */
+    .mgmt-sec{margin-bottom:1.5rem;}
+    .mgmt-sec h4{font-size:14px;font-weight:500;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e5e7eb;}
+    .tag-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+    .opt-tag{display:inline-flex;align-items:center;gap:5px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:4px 10px;font-size:13px;}
+    .opt-tag button{background:none;border:none;cursor:pointer;color:#9ca3af;padding:0;font-size:15px;line-height:1;}
+    .opt-tag button:hover{color:#dc2626;}
+    .add-row{display:flex;gap:8px;}
+    .add-row input{flex:1;font-size:13px;padding:7px 10px;}
+    .check-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .check-row input[type=checkbox]{width:16px;height:16px;flex-shrink:0;}
+    .check-row label{font-size:13px;color:#6b7280;}
+    .note{font-size:12px;color:#6b7280;margin-top:4px;margin-bottom:8px;}
+    /* 묶음 출고 */
+    .cart-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f3f4f6;border-radius:8px;margin-bottom:6px;flex-wrap:wrap;}
+    .cart-item-name{flex:1;font-size:14px;font-weight:500;min-width:150px;}
+    .cart-customer{font-size:12px;color:#6b7280;flex-basis:100%;margin-top:2px;}
+    .parts-summary{width:100%;border-collapse:collapse;font-size:14px;}
+    .parts-summary th{text-align:left;padding:8px 10px;font-size:13px;font-weight:500;color:#6b7280;border-bottom:1px solid #e5e7eb;}
+    .parts-summary td{padding:9px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+    .parts-summary tr.ps-warn td{background:#fef3c7;}
+    .parts-summary tr.ps-err td{background:#fee2e2;}
+    .qty-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px;}
+    .qty-badge.ok{background:#d1fae5;color:#065f46;}
+    .qty-badge.low{background:#fef3c7;color:#92400e;}
+    .qty-badge.empty{background:#fee2e2;color:#991b1b;}
+    .prod-parts-item{margin-bottom:10px;padding:10px 12px;background:#f3f4f6;border-radius:8px;}
+    .prod-parts-title{font-size:13px;font-weight:600;margin-bottom:6px;}
+    .part-line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px solid #e5e7eb;}
+    .part-line:last-child{border-bottom:none;}
+    .shared-badge{font-size:11px;padding:2px 7px;border-radius:10px;margin-left:6px;background:#eef2ff;color:#3730a3;}
+    .unique-badge{font-size:11px;padding:2px 7px;border-radius:10px;margin-left:6px;background:#f0fdf4;color:#166534;}
+    .divider{border:none;border-top:1px solid #e5e7eb;margin:14px 0;}
+    .alert-box{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:8px;}
+    .alert-box.warn{background:#fef3c7;color:#92400e;border:1px solid #f59e0b;}
+    .alert-box.err{background:#fee2e2;color:#991b1b;border:1px solid #ef4444;}
   </style>
 </head>
 <body>
+<div id="modalContainer"></div>
 <div class="container">
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
@@ -109,7 +165,6 @@
   </div>
 
   <div id="alertBanners"></div>
-
   <div class="sync-bar">
     <div class="dot loading" id="syncDot"></div>
     <span id="syncText">Firebase 연결 중...</span>
@@ -117,10 +172,11 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showTab('출고')">출고 처리</button>
+    <button class="tab active" onclick="showTab('출고')">단건 출고</button>
+    <button class="tab" onclick="showTab('묶음')">🛒 묶음 출고</button>
     <button class="tab" onclick="showTab('입고')">입고 처리</button>
     <button class="tab" onclick="showTab('재고')">재고 현황</button>
-    <button class="tab" onclick="showTab('분석')">📊 분석 리포트</button>
+    <button class="tab" onclick="showTab('분석')">📊 분석</button>
     <button class="tab" onclick="showTab('전체통계')">전체 통계</button>
     <button class="tab" onclick="showTab('기사통계')">기사별 통계</button>
     <button class="tab" onclick="showTab('이력')">출고 이력</button>
@@ -128,25 +184,90 @@
     <button class="tab" onclick="showTab('관리')">제품/부품/기사 관리</button>
   </div>
 
-  <!-- 출고 처리 -->
+  <!-- 단건 출고 -->
   <div class="section active" id="tab-출고">
     <div class="card">
-      <h3>출고 처리</h3>
+      <h3>단건 출고 처리</h3>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">기사 선택</label><select id="driverSelect"><option value="">-- 기사를 선택하세요 --</option></select></div>
-      <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">제품 선택</label><select id="productSelect" onchange="updatePreview()"><option value="">-- 제품을 선택하세요 --</option></select></div>
-      <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">수량</label><input type="number" id="qty" value="1" min="1" max="50" style="width:80px;" oninput="updatePreview()"><span style="font-size:14px;color:#6b7280;">세트</span></div>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">고객명</label><input type="text" id="customerName" placeholder="고객명 (선택)" style="width:180px;"></div>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">배송 주소</label><input type="text" id="deliveryAddr" placeholder="배송 주소 (선택)" style="flex:1;"></div>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">메모</label><input type="text" id="shipNote" placeholder="메모 (선택)" style="flex:1;"></div>
-      <div id="previewArea"></div>
-      <div style="margin-top:1rem;"><button class="primary" id="shipBtn" onclick="processShipment()">출고 처리</button></div>
+      <div style="border-top:1px solid #e5e7eb;margin-top:8px;padding-top:14px;">
+        <div style="font-size:14px;font-weight:500;margin-bottom:12px;">제품 선택</div>
+        <div class="step-wrap"><div class="step-badge on" id="sb1">1</div><div class="step-inner"><label>카테고리</label><select id="sc_cat" onchange="step1_cat()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw2" style="display:none;"><div class="step-badge off" id="sb2">2</div><div class="step-inner"><label id="sl2">재질</label><select id="sc_sub" onchange="step2_sub()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw3" style="display:none;"><div class="step-badge off" id="sb3">3</div><div class="step-inner"><label>모델</label><select id="sc_model" onchange="step3_model()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw4" style="display:none;"><div class="step-badge off" id="sb4">4</div><div class="step-inner"><label>사이즈</label><select id="sc_size" onchange="step4_size()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw5" style="display:none;"><div class="step-badge off" id="sb5">5</div><div class="step-inner"><label>색상</label><select id="sc_color" onchange="step5_color()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw6" style="display:none;"><div class="step-badge off" id="sb6">6</div><div class="step-inner"><label>매트리스 포함 여부</label><select id="sc_mattyn" onchange="step6_mattyn()"><option value="">-- 선택하세요 --</option><option value="없음">매트리스 없음</option><option value="있음">매트리스 포함</option></select></div></div>
+        <div class="step-wrap" id="sw7" style="display:none;"><div class="step-badge off" id="sb7">7</div><div class="step-inner"><label>매트리스 종류</label><select id="sc_matttype" onchange="step7_matttype()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="step-wrap" id="sw8" style="display:none;"><div class="step-badge off" id="sb8">8</div><div class="step-inner"><label>매트리스 사이즈</label><select id="sc_mattsize" onchange="step8_mattsize()"><option value="">-- 선택하세요 --</option></select></div></div>
+        <div class="result-sel" id="resultSel" style="display:none;"><div class="result-sel-title" id="rSelTitle"></div><div class="result-sel-path" id="rSelPath"></div><div id="rSelParts"></div></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;align-items:center;gap:10px;"><label style="font-size:14px;color:#6b7280;">수량</label><input type="number" id="qty" value="1" min="1" max="50" style="width:80px;"><span style="font-size:14px;color:#6b7280;">세트</span></div>
+      <div style="margin-top:1rem;"><button class="primary" id="shipBtn" onclick="processShipment()" disabled>출고 처리</button></div>
+    </div>
+  </div>
+
+  <!-- 묶음 출고 -->
+  <div class="section" id="tab-묶음">
+    <div class="card">
+      <h3>🛒 묶음 출고 처리</h3>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">여러 제품을 담아 공통 부품을 합산 → 창고에서 한 번에 가져오세요.</p>
+      <div class="row"><label style="font-size:14px;color:#6b7280;min-width:60px;">기사</label><select id="batchDriver" style="width:220px;flex:none;"><option value="">-- 기사 선택 --</option></select></div>
+      <hr class="divider">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px;">제품 추가</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px;">
+        <div><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">카테고리</div><select id="bc_cat" onchange="bOnCat()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+        <div id="bc_sub_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;" id="bc_sub_lbl">재질</div><select id="bc_sub" onchange="bOnSub()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+        <div id="bc_model_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">모델</div><select id="bc_model" onchange="bOnModel()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+        <div id="bc_size_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">사이즈</div><select id="bc_size" onchange="bOnSize()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+        <div id="bc_color_w" style="display:none;"><div style="font-size:12px;color:#6b7280;margin-bottom:4px;">색상</div><select id="bc_color" onchange="bOnColor()" style="width:100%;font-size:13px;"><option value="">선택</option></select></div>
+      </div>
+      <div id="bc_add_row" style="display:none;">
+        <div style="font-size:12px;color:#065f46;margin-bottom:8px;font-weight:500;" id="bc_preview_name"></div>
+        <div class="row">
+          <input type="number" id="bc_qty" value="1" min="1" style="width:70px;">
+          <span style="font-size:13px;color:#6b7280;">세트</span>
+          <input type="text" id="bc_customer" placeholder="고객명 (선택)" style="flex:1;min-width:80px;">
+          <input type="text" id="bc_addr" placeholder="배송주소 (선택)" style="flex:1;min-width:100px;">
+          <button class="primary" onclick="addToCart()">+ 담기</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="cartCard" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">담은 제품 <span id="cartCount" style="font-size:13px;color:#6b7280;font-weight:400;"></span></h3>
+        <button class="danger" onclick="clearCart()">전체 비우기</button>
+      </div>
+      <div id="cartList"></div>
+    </div>
+    <div class="card" id="batchSummaryCard" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin-bottom:0;">🔧 창고 픽업 목록 <span style="font-size:12px;color:#6b7280;font-weight:400;">(공통 부품 합산)</span></h3>
+        <button class="secondary" style="font-size:12px;" id="detailToggleBtn" onclick="toggleBatchDetail()">제품별 상세 보기</button>
+      </div>
+      <div id="batchAlerts"></div>
+      <table class="parts-summary">
+        <thead><tr><th>부품명</th><th style="text-align:center;">필요</th><th style="text-align:center;">재고</th><th style="text-align:center;">상태</th><th>사용 제품</th></tr></thead>
+        <tbody id="batchPartsBody"></tbody>
+      </table>
+      <hr class="divider">
+      <div id="batchProductDetail" style="display:none;">
+        <div style="font-size:14px;font-weight:500;margin-bottom:10px;">제품별 부품 상세</div>
+        <div id="batchProductDetailList"></div>
+        <hr class="divider">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="success" id="batchShipBtn" onclick="processBatchShipment()">✅ 일괄 출고 처리</button>
+        <span style="font-size:12px;color:#6b7280;">※ 출고 처리 시 모든 항목의 재고가 차감됩니다.</span>
+      </div>
     </div>
   </div>
 
   <!-- 입고 처리 -->
   <div class="section" id="tab-입고">
-    <div class="card">
-      <h3>단건 입고</h3>
+    <div class="card"><h3>단건 입고</h3>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">부품 선택</label><select id="inPartSelect" onchange="renderInPreview()"><option value="">-- 부품을 선택하세요 --</option></select></div>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">입고 수량</label><input type="number" id="inQty" value="1" min="1" style="width:100px;" oninput="renderInPreview()"><span style="font-size:14px;color:#6b7280;">개</span></div>
       <div class="row"><label style="font-size:14px;color:#6b7280;min-width:70px;">공급처</label><input type="text" id="inSupplier" placeholder="공급처 (선택)" style="flex:1;"></div>
@@ -154,14 +275,10 @@
       <div id="inPreview"></div>
       <div style="margin-top:1rem;"><button class="primary" id="inBtn" onclick="processInbound()">입고 처리</button></div>
     </div>
-    <div class="card">
-      <h3>일괄 입고</h3>
+    <div class="card"><h3>일괄 입고</h3>
       <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">여러 부품을 한번에 입고 처리합니다.</div>
       <div id="bulkInRows"></div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="secondary" style="font-size:13px;" onclick="addBulkRow()">+ 부품 추가</button>
-        <button class="primary" onclick="processBulkInbound()">일괄 입고 처리</button>
-      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;"><button class="secondary" style="font-size:13px;" onclick="addBulkRow()">+ 부품 추가</button><button class="primary" onclick="processBulkInbound()">일괄 입고 처리</button></div>
     </div>
   </div>
 
@@ -171,46 +288,18 @@
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
         <h3 style="margin-bottom:0;">부품 재고 현황</h3>
-        <div style="display:flex;gap:8px;">
-          <input type="text" placeholder="부품명 검색..." id="searchPart" oninput="renderInventory()" style="width:150px;">
-          <select id="filterStatus" onchange="renderInventory()" style="width:90px;flex:none;"><option value="전체">전체</option><option value="정상">정상</option><option value="부족">부족</option><option value="소진">소진</option></select>
-        </div>
+        <div style="display:flex;gap:8px;"><input type="text" placeholder="부품명 검색..." id="searchPart" oninput="renderInventory()" style="width:150px;"><select id="filterStatus" onchange="renderInventory()" style="width:90px;flex:none;"><option value="전체">전체</option><option value="정상">정상</option><option value="부족">부족</option><option value="소진">소진</option></select></div>
       </div>
       <table><thead><tr><th>부품명</th><th>현재 재고</th><th>최소 재고</th><th>상태</th><th>수정</th></tr></thead><tbody id="inventoryBody"></tbody></table>
     </div>
   </div>
 
-  <!-- 분석 리포트 -->
+  <!-- 분석 -->
   <div class="section" id="tab-분석">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">⏱ 부품 소진 예측</h3>
-        <select id="predictDays" onchange="renderPrediction()" style="width:100px;flex:none;font-size:13px;"><option value="7">최근 7일</option><option value="14">최근 14일</option><option value="30" selected>최근 30일</option></select>
-      </div>
-      <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">현재 출고 속도 기반으로 부품 소진 예상일을 계산합니다.</div>
-      <div id="predictionList"></div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">🔥 잘 나가는 / 안 나가는 제품</h3>
-        <select id="productAnalysisPeriod" onchange="renderProductAnalysis()" style="width:110px;flex:none;font-size:13px;"><option value="30">최근 30일</option><option value="90">최근 90일</option><option value="0">전체</option></select>
-      </div>
-      <div id="productAnalysis"></div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">📈 월별 출고량 추이</h3>
-        <select id="monthlyChartYear" onchange="renderMonthlyChart()" style="width:100px;flex:none;font-size:13px;"></select>
-      </div>
-      <div class="chart-wrap"><canvas id="monthlyCanvas" height="180"></canvas></div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">👷 기사별 성과 비교 리포트</h3>
-        <select id="reportPeriod" onchange="renderDriverReport()" style="width:110px;flex:none;font-size:13px;"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option><option value="0">전체</option></select>
-      </div>
-      <div id="driverReport"></div>
-    </div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">⏱ 부품 소진 예측</h3><select id="predictDays" onchange="renderPrediction()" style="width:100px;flex:none;font-size:13px;"><option value="7">최근 7일</option><option value="14">최근 14일</option><option value="30" selected>최근 30일</option></select></div><div style="font-size:13px;color:#6b7280;margin-bottom:12px;">현재 출고 속도 기반으로 부품 소진 예상일을 계산합니다.</div><div id="predictionList"></div></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">🔥 잘 나가는 / 안 나가는 제품</h3><select id="productAnalysisPeriod" onchange="renderProductAnalysis()" style="width:110px;flex:none;font-size:13px;"><option value="30">최근 30일</option><option value="90">최근 90일</option><option value="0">전체</option></select></div><div id="productAnalysis"></div></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">📈 월별 출고량 추이</h3><select id="monthlyChartYear" onchange="renderMonthlyChart()" style="width:100px;flex:none;font-size:13px;"></select></div><div class="chart-wrap"><canvas id="monthlyCanvas" height="180"></canvas></div></div>
+    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">👷 기사별 성과 비교 리포트</h3><select id="reportPeriod" onchange="renderDriverReport()" style="width:110px;flex:none;font-size:13px;"><option value="7">최근 7일</option><option value="30" selected>최근 30일</option><option value="90">최근 90일</option><option value="0">전체</option></select></div><div id="driverReport"></div></div>
   </div>
 
   <!-- 전체 통계 -->
@@ -219,11 +308,7 @@
       <button class="pbtn active" id="gp-일별" onclick="setGlobalPeriod('일별')">일별</button>
       <button class="pbtn" id="gp-월별" onclick="setGlobalPeriod('월별')">월별</button>
       <button class="pbtn" id="gp-년별" onclick="setGlobalPeriod('년별')">년별</button>
-      <div class="nav-row" style="margin-left:auto;">
-        <button class="secondary" onclick="navGlobal(-1)">◀</button>
-        <span class="nav-label" id="gNavLabel"></span>
-        <button class="secondary" onclick="navGlobal(1)">▶</button>
-      </div>
+      <div class="nav-row" style="margin-left:auto;"><button class="secondary" onclick="navGlobal(-1)">◀</button><span class="nav-label" id="gNavLabel"></span><button class="secondary" onclick="navGlobal(1)">▶</button></div>
     </div>
     <div class="grid3" id="gSummary"></div>
     <div class="card"><h3>기사별 출고량 순위</h3><div id="gDriverBars"></div></div>
@@ -233,20 +318,14 @@
 
   <!-- 기사별 통계 -->
   <div class="section" id="tab-기사통계">
-    <div style="margin-bottom:1rem;">
-      <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">기사 선택</div>
-      <div id="driverTabBtns" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-    </div>
+    <div style="margin-bottom:1rem;"><div style="font-size:13px;color:#6b7280;margin-bottom:8px;">기사 선택</div><div id="driverTabBtns" style="display:flex;flex-wrap:wrap;gap:4px;"></div></div>
     <div id="driverStatContent"><div class="empty-state">기사를 선택하세요.</div></div>
   </div>
 
   <!-- 출고 이력 -->
   <div class="section" id="tab-이력">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">출고 이력</h3>
-        <input type="text" placeholder="기사/제품/고객 검색..." id="histSearch" oninput="renderHistory()" style="width:190px;font-size:13px;">
-      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">출고 이력</h3><input type="text" placeholder="기사/제품/고객 검색..." id="histSearch" oninput="renderHistory()" style="width:190px;font-size:13px;"></div>
       <div id="historyList"><div class="empty-state">출고 이력이 없습니다.</div></div>
     </div>
   </div>
@@ -254,39 +333,33 @@
   <!-- 입고 이력 -->
   <div class="section" id="tab-입고이력">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
-        <h3 style="margin-bottom:0;">입고 이력</h3>
-        <input type="text" placeholder="부품명/공급처 검색..." id="inHistSearch" oninput="renderInHistory()" style="width:190px;font-size:13px;">
-      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">입고 이력</h3><input type="text" placeholder="부품명/공급처 검색..." id="inHistSearch" oninput="renderInHistory()" style="width:190px;font-size:13px;"></div>
       <div id="inHistoryList"><div class="empty-state">입고 이력이 없습니다.</div></div>
     </div>
   </div>
 
   <!-- 관리 -->
   <div class="section" id="tab-관리">
+    <div class="card"><h3>기사 관리</h3><div class="row"><input type="text" id="newDriverName" placeholder="기사명 입력" style="width:200px;"><button class="secondary" onclick="addDriver()">추가</button></div><div id="driverChips" style="margin-top:4px;"></div></div>
     <div class="card">
-      <h3>기사 관리</h3>
-      <div class="row"><input type="text" id="newDriverName" placeholder="기사명 입력" style="width:200px;"><button class="secondary" onclick="addDriver()">추가</button></div>
-      <div id="driverChips" style="margin-top:4px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;"><h3 style="margin-bottom:0;">부품 관리</h3><div style="display:flex;gap:8px;"><input type="text" id="searchPartMgmt" placeholder="부품명 검색..." oninput="renderPartMgmt()" style="width:150px;font-size:13px;"><button class="primary" style="font-size:13px;" onclick="openAddPartModal()">+ 부품 추가</button></div></div>
+      <table><thead><tr><th>부품명</th><th>현재 재고</th><th>최소 재고</th><th>상태</th><th style="width:130px;">관리</th></tr></thead><tbody id="partMgmtBody"></tbody></table>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-      <div class="card">
-        <h3>부품 재고 수정</h3>
-        <div class="row"><input type="text" id="newPartName" placeholder="부품명" style="flex:1;"></div>
-        <div class="row"><input type="number" id="newPartQty" placeholder="현재 재고" style="width:110px;"><input type="number" id="newPartMin" placeholder="최소 재고" style="width:110px;"><button class="secondary" onclick="addPart()">저장</button></div>
-        <div style="font-size:12px;color:#6b7280;">기존 부품명 입력시 수량 덮어씀</div>
-      </div>
-      <div class="card">
-        <h3>제품 등록</h3>
-        <div class="row"><input type="text" id="newProdName" placeholder="제품명" style="flex:1;"></div>
-        <div id="prodPartsList"></div>
-        <button class="secondary" style="font-size:13px;margin-bottom:8px;" onclick="addPartSlot()">+ 부품 추가</button>
-        <div><button class="secondary" onclick="saveProduct()">제품 저장</button></div>
-      </div>
+      <div class="card"><h3>제품 등록 (부품 구성)</h3><div class="row"><input type="text" id="newProdName" placeholder="제품명" style="flex:1;"></div><div id="prodPartsList"></div><button class="secondary" style="font-size:13px;margin-bottom:8px;" onclick="addPartSlot()">+ 부품 추가</button><div><button class="secondary" onclick="saveProduct()">제품 저장</button></div></div>
+      <div class="card"><h3>등록된 제품 목록</h3><table><thead><tr><th>제품명</th><th>구성 부품</th><th style="width:55px;">삭제</th></tr></thead><tbody id="prodListBody"></tbody></table></div>
     </div>
     <div class="card">
-      <h3>등록된 제품 목록</h3>
-      <table><thead><tr><th>제품명</th><th>구성 부품</th><th style="width:60px;">관리</th></tr></thead><tbody id="prodListBody"></tbody></table>
+      <h3>⚙️ 제품 선택 옵션 관리</h3>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:1.2rem;">출고 처리 화면의 계층 드롭다운 옵션을 편집합니다.</p>
+      <div class="mgmt-sec"><h4>1단계 — 카테고리</h4><div class="tag-wrap" id="opt-cat"></div><div class="add-row"><input type="text" id="inp-cat" placeholder="예: 장롱"><button class="secondary small" onclick="addOptItem('categories','inp-cat')">추가</button></div></div>
+      <div class="mgmt-sec"><h4>2단계 — 침대: 재질</h4><p class="note">이름에 "편백"이 포함되면 모델 없이 바로 사이즈로 이동합니다.</p><div class="tag-wrap" id="opt-pyun"></div><div class="add-row"><input type="text" id="inp-pyun" placeholder="예: 편백, 일반(원목)"><button class="secondary small" onclick="addOptItem('pyunbaek','inp-pyun')">추가</button></div></div>
+      <div class="mgmt-sec"><h4>3단계 — 모델 (카테고리별)</h4><div style="margin-bottom:8px;"><select id="model-cat-sel" onchange="renderOptModels()" style="width:180px;font-size:13px;"><option value="">카테고리 선택</option></select></div><div id="opt-model-list"></div><div class="add-row" id="opt-model-add" style="display:none;"><input type="text" id="inp-model" placeholder="새 모델명"><button class="secondary small" onclick="addOptModel()">추가</button></div></div>
+      <div class="mgmt-sec"><h4>4단계 — 사이즈</h4><div class="tag-wrap" id="opt-size"></div><div class="add-row"><input type="text" id="inp-size" placeholder="예: 싱글, 슈퍼싱글, 퀸, 킹"><button class="secondary small" onclick="addOptItem('sizes','inp-size')">추가</button></div></div>
+      <div class="mgmt-sec"><h4>5단계 — 색상</h4><div class="tag-wrap" id="opt-color"></div><div class="add-row"><input type="text" id="inp-color" placeholder="예: 화이트, 월넛, 오크"><button class="secondary small" onclick="addOptItem('colors','inp-color')">추가</button></div></div>
+      <div class="mgmt-sec"><h4>6단계 — 매트리스 선택 대상 모델</h4><p class="note">✅ 체크된 모델은 색상 선택 후 매트리스 여부 선택이 나타납니다.</p><div id="opt-matt-models"></div></div>
+      <div class="mgmt-sec"><h4>7단계 — 매트리스 종류</h4><div class="tag-wrap" id="opt-matt"></div><div class="add-row"><input type="text" id="inp-matt" placeholder="예: 본넬스프링, 포켓스프링"><button class="secondary small" onclick="addOptItem('mattTypes','inp-matt')">추가</button></div></div>
+      <div class="mgmt-sec"><h4>8단계 — 매트리스 사이즈</h4><div class="tag-wrap" id="opt-mattsize"></div><div class="add-row"><input type="text" id="inp-mattsize" placeholder="예: 싱글, 퀸, 킹"><button class="secondary small" onclick="addOptItem('mattSizes','inp-mattsize')">추가</button></div></div>
     </div>
   </div>
 

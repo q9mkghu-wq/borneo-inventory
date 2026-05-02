@@ -1,16 +1,14 @@
-// src/firebase.js
-// ✅ Firebase 콘솔에서 발급받은 값으로 교체하세요
+// ✅ Firebase 콘솔에서 복사한 값으로 아래를 교체하세요
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-   apiKey: "AIzaSyC6RdJRUntnxQJ4ncJo0sK-Okc8288LFRs",
-  authDomain: "borneo-inventory.firebaseapp.com",
-  projectId: "borneo-inventory",
-  storageBucket: "borneo-inventory.firebasestorage.app",
-  messagingSenderId: "593523936913",
-  appId: "1:593523936913:web:63ee3ad60e9e7b9966f930"
-
+  apiKey: "여기에-API-KEY",
+  authDomain: "여기에-프로젝트ID.firebaseapp.com",
+  projectId: "여기에-프로젝트ID",
+  storageBucket: "여기에-프로젝트ID.appspot.com",
+  messagingSenderId: "여기에-SENDER-ID",
+  appId: "여기에-APP-ID"
 }
 
 const app = initializeApp(firebaseConfig)
